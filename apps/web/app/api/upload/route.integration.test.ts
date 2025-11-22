@@ -52,7 +52,8 @@ function createRequest(formData: FormData) {
   });
 }
 
-describe('POST /api/upload integration', () => {
+// Skip integration tests in CI (run locally with .env.local)
+describe.skipIf(!process.env.POSTGRES_URL)('POST /api/upload integration', () => {
   let createdImageId: string | null = null;
 
   beforeEach(() => {
