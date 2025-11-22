@@ -8,7 +8,7 @@ export async function resizeForPreview(imageBuffer: Buffer): Promise<Buffer> {
   const metadata = await image.metadata();
 
   if (!metadata.width || !metadata.height) {
-    return imageBuffer;
+    throw new Error('Unable to read image dimensions');
   }
 
   // Calculate 50% of original dimensions
