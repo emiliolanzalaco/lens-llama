@@ -14,7 +14,7 @@ export function AuthBanner() {
                         <span className="text-sm text-muted-foreground">
                             Logged in as{' '}
                             <span className="font-medium text-foreground">
-                                {user?.email?.address || user?.wallet?.address?.slice(0, 6) + '...' + user?.wallet?.address?.slice(-4)}
+                                {user ? (user.email?.address || (user.wallet?.address ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}` : 'Unknown User')) : 'Unknown User'}
                             </span>
                         </span>
                     </div>
