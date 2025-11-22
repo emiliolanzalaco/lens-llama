@@ -38,3 +38,6 @@ jobs:
 
       - name: Build
         run: pnpm --filter web build
+        env:
+          NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+
