@@ -1,4 +1,4 @@
-import { verifyMessage, isAddress, recoverMessageAddress } from 'viem';
+import { isAddress, recoverMessageAddress } from 'viem';
 
 /**
  * ERC-6492 signature verification

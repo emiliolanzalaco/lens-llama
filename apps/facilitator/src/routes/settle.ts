@@ -8,7 +8,7 @@ export const settleRouter = Router();
  */
 settleRouter.post('/', async (req, res) => {
   try {
-    const { paymentId, amount, recipient, proof } = req.body;
+    const { paymentId, amount, recipient } = req.body;
 
     if (!paymentId || !amount || !recipient) {
       return res.status(400).json({
