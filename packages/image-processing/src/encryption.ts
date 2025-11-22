@@ -8,7 +8,7 @@ export function generateEncryptionKey(): Buffer {
   return crypto.randomBytes(KEY_LENGTH);
 }
 
-export async function encryptImage(imageBuffer: Buffer, key: Buffer): Promise<Buffer> {
+export function encryptImage(imageBuffer: Buffer, key: Buffer): Buffer {
   const iv = crypto.randomBytes(IV_LENGTH);
   const cipher = crypto.createCipheriv(ALGORITHM, key, iv);
   const encrypted = Buffer.concat([cipher.update(imageBuffer), cipher.final()]);
@@ -17,7 +17,7 @@ export async function encryptImage(imageBuffer: Buffer, key: Buffer): Promise<Bu
   return Buffer.concat([iv, encrypted]);
 }
 
-export async function decryptImage(encryptedBuffer: Buffer, key: Buffer): Promise<Buffer> {
+export function decryptImage(encryptedBuffer: Buffer, key: Buffer): Buffer {
   const iv = encryptedBuffer.subarray(0, IV_LENGTH);
   const data = encryptedBuffer.subarray(IV_LENGTH);
   const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);

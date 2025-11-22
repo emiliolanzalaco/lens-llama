@@ -23,53 +23,53 @@ describe('encryption', () => {
   });
 
   describe('encryptImage and decryptImage', () => {
-    it('encrypts and decrypts back to original', async () => {
+    it('encrypts and decrypts back to original', () => {
       const input = Buffer.from('test image data');
       const key = generateEncryptionKey();
 
-      const encrypted = await encryptImage(input, key);
-      const decrypted = await decryptImage(encrypted, key);
+      const encrypted = encryptImage(input, key);
+      const decrypted = decryptImage(encrypted, key);
 
       expect(decrypted).toEqual(input);
     });
 
-    it('produces different ciphertext for same plaintext', async () => {
+    it('produces different ciphertext for same plaintext', () => {
       const input = Buffer.from('test image data');
       const key = generateEncryptionKey();
 
-      const encrypted1 = await encryptImage(input, key);
-      const encrypted2 = await encryptImage(input, key);
+      const encrypted1 = encryptImage(input, key);
+      const encrypted2 = encryptImage(input, key);
 
       // Different IVs produce different ciphertext
       expect(encrypted1.equals(encrypted2)).toBe(false);
     });
 
-    it('fails to decrypt with wrong key', async () => {
+    it('fails to decrypt with wrong key', () => {
       const input = Buffer.from('test image data');
       const key1 = generateEncryptionKey();
       const key2 = generateEncryptionKey();
 
-      const encrypted = await encryptImage(input, key1);
+      const encrypted = encryptImage(input, key1);
 
-      await expect(decryptImage(encrypted, key2)).rejects.toThrow();
+      expect(() => decryptImage(encrypted, key2)).toThrow();
     });
 
-    it('handles empty buffer', async () => {
+    it('handles empty buffer', () => {
       const input = Buffer.from('');
       const key = generateEncryptionKey();
 
-      const encrypted = await encryptImage(input, key);
-      const decrypted = await decryptImage(encrypted, key);
+      const encrypted = encryptImage(input, key);
+      const decrypted = decryptImage(encrypted, key);
 
       expect(decrypted).toEqual(input);
     });
 
-    it('handles large buffer', async () => {
+    it('handles large buffer', () => {
       const input = Buffer.alloc(1024 * 1024, 'x'); // 1MB
       const key = generateEncryptionKey();
 
-      const encrypted = await encryptImage(input, key);
-      const decrypted = await decryptImage(encrypted, key);
+      const encrypted = encryptImage(input, key);
+      const decrypted = decryptImage(encrypted, key);
 
       expect(decrypted).toEqual(input);
     });
