@@ -80,14 +80,14 @@ it('uses AES-256-CBC cipher', async () => {
 ## Phase 1: Foundation
 
 ### 1.1 Project Setup
-- [ ] Initialize Next.js 14 with App Router, TypeScript, TailwindCSS
-- [ ] Configure ESLint and Prettier
-- [ ] Set up Jest or Vitest for testing
-- [ ] Create folder structure: app/, lib/, components/, db/
-- [ ] Set up .env.example with all required variables
-- [ ] Configure GitHub Actions for CI (lint, types, tests, build)
+- [x] Initialize Next.js 14 with App Router, TypeScript, TailwindCSS
+- [x] Configure ESLint and Prettier
+- [x] Set up Jest or Vitest for testing
+- [x] Create folder structure: app/, lib/, components/, db/
+- [x] Set up .env.example with all required variables
+- [x] Configure GitHub Actions for CI (lint, types, tests, build)
 
-**Branch:** `setup/project-init` | **Assigned:** _unclaimed_
+**Branch:** `setup/project-init` | **Assigned:** _complete_
 
 ### 1.2 Database Schema
 - [ ] Install and configure Drizzle ORM
