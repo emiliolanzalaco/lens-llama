@@ -1,0 +1,13 @@
+{
+    "name": "@lens-llama/database",
+    "version": "0.0.0",
+    "private": true,
+    "scripts": {
+        "lint": "eslint .",
+        "type-check": "tsc --noEmit"
+    },
+    "devDependencies": {
+        "@lens-llama/config": "workspace:*",
+        "typescript": "^5.3.3"
+    }
+}
