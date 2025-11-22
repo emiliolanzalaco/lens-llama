@@ -1,11 +1,5 @@
 import { getSynapseClient } from './client';
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { MAX_RETRIES, RETRY_DELAY_MS, sleep } from './utils';
 
 export async function downloadFromFilecoin(pieceCid: string): Promise<Buffer> {
   const synapse = await getSynapseClient();

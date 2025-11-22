@@ -1,16 +1,10 @@
 import type { PieceCID } from '@filoz/synapse-sdk';
 import { getSynapseClient } from './client';
-
-const MAX_RETRIES = 3;
-const RETRY_DELAY_MS = 1000;
+import { MAX_RETRIES, RETRY_DELAY_MS, sleep } from './utils';
 
 export interface UploadResult {
   pieceCid: string;
   size: number;
-}
-
-async function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 export async function uploadToFilecoin(data: Buffer): Promise<UploadResult> {

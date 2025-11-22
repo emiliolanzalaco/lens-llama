@@ -5,7 +5,7 @@
  * SYNAPSE_PRIVATE_KEY=... FILECOIN_RPC_URL=... pnpm test:integration
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { uploadToFilecoin } from './upload';
 import { downloadFromFilecoin } from './download';
 import { resetSynapseClient } from './client';

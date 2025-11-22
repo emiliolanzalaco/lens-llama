@@ -10,7 +10,7 @@
     "test": "vitest run --exclude src/integration.test.ts",
     "test:watch": "vitest --exclude src/integration.test.ts",
     "test:integration": "vitest run src/integration.test.ts",
-    "setup": "node --import tsx src/setup.ts"
+    "setup": "tsx src/setup.ts"
   },
   "devDependencies": {
     "@lens-llama/config": "workspace:*",
