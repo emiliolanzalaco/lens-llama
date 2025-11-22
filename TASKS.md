@@ -137,15 +137,15 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 ## Phase 2: Storage & Upload
 
 ### 2.1 Synapse SDK Integration
-- [ ] Install @filoz/synapse-sdk and ethers v6
-- [ ] Create Synapse client singleton with private key config
-- [ ] Implement upload function (see TECHNICAL_SPEC for encryption flow)
-- [ ] Implement download function with decryption
-- [ ] Add error handling and retry logic for network failures
-- [ ] Write integration tests with Filecoin testnet
-- [ ] Test full upload → download round-trip
+- [x] Install @filoz/synapse-sdk
+- [x] Create Synapse client singleton with private key config
+- [x] Implement upload function (see TECHNICAL_SPEC for encryption flow)
+- [x] Implement download function with decryption
+- [x] Add error handling and retry logic for network failures
+- [x] Write unit tests for client configuration
+- [ ] Test full upload → download round-trip with Filecoin testnet
 
-**Branch:** `feature/synapse-storage` | **Assigned:** _unclaimed_
+**Branch:** `feature/synapse-storage` | **Assigned:** _in progress_
 
 ### 2.2 Image Processing
 - [x] Install Sharp
