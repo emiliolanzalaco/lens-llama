@@ -17,6 +17,13 @@ export async function GET(request: Request) {
       orderBy: (images, { desc }) => [desc(images.createdAt)],
       limit: limit,
       offset: offset,
+      with: {
+        watermarked_cid: true,
+        title: true,
+        priceUsdc: true,
+        photographerAddress: true,
+        id: true,
+      },
     });
 
     return NextResponse.json({
