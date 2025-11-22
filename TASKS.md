@@ -161,17 +161,18 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `feature/image-processing` | **Assigned:** _complete_
 
 ### 2.3 Upload API Endpoint
-- [ ] Create POST /api/upload route handler
-- [ ] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
-- [ ] Generate watermarked preview with Sharp
-- [ ] Encrypt full resolution with AES-256
-- [ ] Upload both to Filecoin via Synapse SDK
-- [ ] Save to database: CIDs, encryption key, metadata
-- [ ] Return encrypted_cid, watermarked_cid, id
-- [ ] Write integration tests for success and error cases
+- [x] Create POST /api/upload route handler
+- [x] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
+- [x] Validate request body with Zod schema (title, price, photographerAddress, tags)
+- [x] Generate watermarked preview with Sharp
+- [x] Encrypt full resolution with AES-256
+- [x] Upload both to Filecoin via Synapse SDK
+- [x] Save to database: CIDs, encryption key, metadata
+- [x] Return encrypted_cid, watermarked_cid, id
+- [x] Write integration tests for success and error cases
 - [ ] Add rate limiting
 
-**Branch:** `feature/upload-api` | **Assigned:** _unclaimed_
+**Branch:** `feature/upload-api` | **Assigned:** _in progress_
 
 ### 2.4 Upload Page UI
 - [ ] Create /upload page (protected - requires Privy auth)
