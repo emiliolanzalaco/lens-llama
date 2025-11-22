@@ -9,7 +9,7 @@ Pay-per-use stock photography with x402 micropayments. Photographers get 90% ins
 
 ## Tech Stack
 - **Frontend:** Next.js 14, TypeScript, TailwindCSS, Privy SDK
-- **Backend:** Next.js API Routes, Vercel Postgres, Drizzle ORM, Viem
+- **Backend:** Next.js API Routes, Neon Postgres, Drizzle ORM, Viem
 - **Blockchain:** Base Mainnet, custom x402 facilitator (ERC-6492 fix), RevenueDistributor.sol
 - **Storage:** Filecoin Onchain Cloud via Synapse SDK (`@filoz/synapse-sdk`), Sharp for watermarks
 

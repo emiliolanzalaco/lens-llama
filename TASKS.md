@@ -110,16 +110,16 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `setup/project-init` | **Assigned:** _complete_
 
 ### 1.2 Database Schema
-- [ ] Install and configure Drizzle ORM
-- [ ] Create images table schema (see TECHNICAL_SPEC for fields including encryption_key)
-- [ ] Implement encryption-at-rest for encryption_key field using MASTER_ENCRYPTION_KEY
-- [ ] Create licenses table schema
-- [ ] Write migration files
-- [ ] Create required indexes (photographer lookup, license verification)
-- [ ] Write integration tests for database operations
-- [ ] Test connection to Vercel Postgres
+- [x] Install and configure Drizzle ORM
+- [x] Create images table schema (see TECHNICAL_SPEC for fields including encryption_key)
+- [x] Implement encryption-at-rest for encryption_key field using MASTER_ENCRYPTION_KEY
+- [x] Create licenses table schema
+- [x] Write migration files
+- [x] Create required indexes (photographer lookup, license verification)
+- [x] Write integration tests for database operations
+- [x] Test connection to Neon Postgres
 
-**Branch:** `setup/database` | **Assigned:** _unclaimed_
+**Branch:** `setup/database` | **Assigned:** _complete_
 
 ### 1.3 Privy Authentication
 - [ ] Install Privy SDK (@privy-io/react-auth)
