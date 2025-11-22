@@ -122,15 +122,16 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `setup/database` | **Assigned:** _complete_
 
 ### 1.3 Privy Authentication
-- [ ] Install Privy SDK (@privy-io/react-auth)
-- [ ] Create PrivyProvider wrapper component
-- [ ] Configure login methods: email, Google, external wallet
-- [ ] Enable embedded wallet creation for email/Google users
-- [ ] Create useAuth hook exposing user and wallet
-- [ ] Write tests for auth state management
-- [ ] Manually test login/logout flow
+- [x] Install Privy SDK (@privy-io/react-auth)
+- [x] Create PrivyProvider wrapper component
+- [x] Configure login methods: email, Google, external wallet
+- [x] Enable embedded wallet creation for email/Google users
+- [x] Simple UI using ShadcnCn/ui MCP components for authentication form
+- [x] Create useAuth hook exposing user and wallet
+- [x] Write tests for auth state management
+- [x] Manually test login/logout flow
 
-**Branch:** `feature/privy-auth` | **Assigned:** _unclaimed_
+**Branch:** `feature/privy-auth` | **Assigned:** _in progress_
 
 ---
 
