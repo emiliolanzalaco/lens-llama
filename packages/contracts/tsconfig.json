@@ -2,7 +2,9 @@
   "compilerOptions": {
     "target": "ES2020",
     "module": "commonjs",
-    "lib": ["ES2020"],
+    "lib": [
+      "ES2020"
+    ],
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
@@ -12,6 +14,8 @@
     "moduleResolution": "node",
     "resolveJsonModule": true
   },
-  "include": ["./scripts", "./test"],
-  "exclude": ["node_modules"]
+  "include": [],
+  "exclude": [
+    "node_modules"
+  ]
 }

@@ -26,9 +26,12 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.21.2
+<<<<<<< HEAD
       express-rate-limit:
         specifier: ^7.1.5
         version: 7.5.1(express@4.21.2)
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
       viem:
         specifier: ^2.0.0
         version: 2.39.3(typescript@5.9.3)
@@ -73,17 +76,28 @@ importers:
         specifier: workspace:*
         version: link:../../packages/database
       '@privy-io/react-auth':
+<<<<<<< HEAD
         specifier: ^1.88.0
         version: 1.99.1(@solana/web3.js@1.98.4)(@types/react@18.3.27)(bs58@6.0.0)(react-dom@18.3.1)(react@18.3.1)(typescript@5.9.3)
       '@privy-io/server-auth':
         specifier: ^1.32.5
+=======
+        specifier: ^1.60.0
+        version: 1.99.1(@solana/web3.js@1.98.4)(@types/react@18.3.27)(bs58@6.0.0)(react-dom@18.3.1)(react@18.3.1)(typescript@5.9.3)
+      '@privy-io/server-auth':
+        specifier: 1.32.5
+>>>>>>> 9e033a6 (chore: fix install deps)
         version: 1.32.5(typescript@5.9.3)(viem@2.39.3)
       drizzle-orm:
         specifier: ^0.29.3
         version: 0.29.5(@types/react@18.3.27)(postgres@3.4.7)(react@18.3.1)
       next:
         specifier: 14.2.14
+<<<<<<< HEAD
         version: 14.2.14(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@18.3.1)(react@18.3.1)
+=======
+        version: 14.2.14(@babel/core@7.28.5)(react-dom@18.3.1)(react@18.3.1)
+>>>>>>> 9e033a6 (chore: fix install deps)
       postgres:
         specifier: ^3.4.3
         version: 3.4.7
@@ -97,9 +111,12 @@ importers:
         specifier: ^2.0.0
         version: 2.39.3(typescript@5.9.3)
     devDependencies:
+<<<<<<< HEAD
       '@playwright/test':
         specifier: ^1.40.1
         version: 1.56.1
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
       '@testing-library/jest-dom':
         specifier: ^6.1.5
         version: 6.9.1
@@ -2604,6 +2621,7 @@ packages:
     dev: true
     optional: true
 
+<<<<<<< HEAD
   /@playwright/test@1.56.1:
     resolution: {integrity: sha512-vSMYtL/zOcFpvJCW71Q/OEGQb7KYBPAdKh35WNSkaZA75JlAO8ED8UN6GUNTm3drWomcbcqRPFqQbLae8yBTdg==}
     engines: {node: '>=18'}
@@ -2611,6 +2629,8 @@ packages:
     dependencies:
       playwright: 1.56.1
 
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
   /@privy-io/api-base@1.4.1:
     resolution: {integrity: sha512-q98uQGVBIY5SBHjJWL/udpbxM9ISpZl8Lwwjd0p0XHSMJMOgEhS4GLjcO7l3clfNrqL0fAuinQaa+seCaYOzng==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
@@ -7450,7 +7470,10 @@ packages:
       is-hex-prefixed: 1.0.0
       strip-hex-prefix: 1.0.0
     dev: false
+<<<<<<< HEAD
     bundledDependencies: false
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
 
   /event-emitter@0.3.5:
     resolution: {integrity: sha512-D9rRn9y7kLPnJ+hMq7S/nhvoKwwvVJahBi2BPmx3bvbsEdK3W9ii8cBSGjP+72/LnM4n6fo3+dkCX5FeTQruXA==}
@@ -7514,6 +7537,7 @@ packages:
       jest-util: 29.7.0
     dev: true
 
+<<<<<<< HEAD
   /express-rate-limit@7.5.1(express@4.21.2):
     resolution: {integrity: sha512-7iN8iPMDzOMHPUYllBEsQdWVB6fPDMPqwjBaFrgr4Jgr/+okjvzAy+UHlYYL/Vs0OsOrMkwS6PJDkFlJwoxUnw==}
     engines: {node: '>= 16'}
@@ -7523,6 +7547,8 @@ packages:
       express: 4.21.2
     dev: false
 
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
   /express@4.21.2:
     resolution: {integrity: sha512-28HqgMZAmih1Czt9ny7qr6ek2qddF4FclbMzwhCREB6OFfH+rXAnuNCwo1/wFvrtbgsQDb4kSbX9de9lFbrXnA==}
     engines: {node: '>= 0.10.0'}
@@ -7819,6 +7845,7 @@ packages:
     resolution: {integrity: sha512-OO0pH2lK6a0hZnAdau5ItzHPI6pUlvI7jMVnxUQRtw4owF2wk8lOSabtGDCTP4Ggrg2MbGnWO9X8K1t4+fGMDw==}
     dev: true
 
+<<<<<<< HEAD
   /fsevents@2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -7826,6 +7853,8 @@ packages:
     requiresBuild: true
     optional: true
 
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
   /fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
@@ -9946,7 +9975,11 @@ packages:
   /next-tick@1.1.0:
     resolution: {integrity: sha512-CXdUiJembsNjuToQvxayPZF9Vqht7hewsvy2sOWafLvi2awflj9mOC6bHIg50orX8IJvWKY9wYQ/zB2kogPslQ==}
 
+<<<<<<< HEAD
   /next@14.2.14(@babel/core@7.28.5)(@playwright/test@1.56.1)(react-dom@18.3.1)(react@18.3.1):
+=======
+  /next@14.2.14(@babel/core@7.28.5)(react-dom@18.3.1)(react@18.3.1):
+>>>>>>> 9e033a6 (chore: fix install deps)
     resolution: {integrity: sha512-Q1coZG17MW0Ly5x76shJ4dkC23woLAhhnDnw+DfTc7EpZSGuWrlsZ3bZaO8t6u1Yu8FVfhkqJE+U8GC7E0GLPQ==}
     engines: {node: '>=18.17.0'}
     hasBin: true
@@ -9965,7 +9998,10 @@ packages:
         optional: true
     dependencies:
       '@next/env': 14.2.14
+<<<<<<< HEAD
       '@playwright/test': 1.56.1
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
       '@swc/helpers': 0.5.5
       busboy: 1.6.0
       caniuse-lite: 1.0.30001756
@@ -10526,6 +10562,7 @@ packages:
       find-up: 4.1.0
     dev: true
 
+<<<<<<< HEAD
   /playwright-core@1.56.1:
     resolution: {integrity: sha512-hutraynyn31F+Bifme+Ps9Vq59hKuUCz7H1kDOcBs+2oGguKkWTU50bBWrtz34OUWmIwpBTWDxaRPXrIXkgvmQ==}
     engines: {node: '>=18'}
@@ -10540,6 +10577,8 @@ packages:
     optionalDependencies:
       fsevents: 2.3.2
 
+=======
+>>>>>>> 9e033a6 (chore: fix install deps)
   /pngjs@5.0.0:
     resolution: {integrity: sha512-40QW5YalBNfQo5yRYmiw7Yz6TKKVr3h6970B2YE+3fQpsWcrbj1PzJgxeJ19DRQjhMbKPIuMY8rFaXc8moolVw==}
     engines: {node: '>=10.13.0'}
