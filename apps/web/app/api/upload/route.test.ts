@@ -97,7 +97,7 @@ describe('POST /api/upload', () => {
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Invalid price');
+    expect(data.error).toBe('Price must be a positive number');
   });
 
   it('successfully uploads image and returns CIDs', async () => {
