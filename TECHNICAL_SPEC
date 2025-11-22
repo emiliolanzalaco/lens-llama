@@ -140,6 +140,7 @@ NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS
 PLATFORM_TREASURY_ADDRESS
 FACILITATOR_URL
 FACILITATOR_PRIVATE_KEY
+MASTER_ENCRYPTION_KEY
 ```
 
 ---
@@ -200,7 +201,20 @@ const decrypted = Buffer.concat([decipher.update(data), decipher.final()])
 
 ## Security Notes
 
+### Payment Security
 - Fetch price/photographer from DB, never trust frontend
 - Verify license doesn't exist before creating
 - Validate payment with facilitator before issuing license
 - Match buyer address from auth session to payment proof
+- Validate payment amount matches image price exactly
+- Include nonce/timestamp in payment proof to prevent replay attacks
+
+### Key Management
+- Encrypt per-image keys with master key before storing in DB
+- Master key stored as `MASTER_ENCRYPTION_KEY` env var
+- Never store unencrypted keys in database
+
+### Smart Contract Security
+- Validate photographer and treasury addresses are not zero addresses
+- Implement access control for distributePayment function
+- Emit events for all state changes

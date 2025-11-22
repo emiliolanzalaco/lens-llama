@@ -20,7 +20,7 @@
 
 **Development cycle:** Write tests → Implement → Run tests → Build locally → Push PR
 
-**Commits:** Use conventional commits (feat:, fix:, test:, docs:, refactor:)
+**Commits:** Use conventional commits (feat:, fix:, test:, docs:, refactor:). Keep messages concise and single-line.
 
 **Authorship:** All commits authored by the engineer. No AI attribution.
 
@@ -92,6 +92,7 @@ it('uses AES-256-CBC cipher', async () => {
 ### 1.2 Database Schema
 - [ ] Install and configure Drizzle ORM
 - [ ] Create images table schema (see TECHNICAL_SPEC for fields including encryption_key)
+- [ ] Implement encryption-at-rest for encryption_key field using MASTER_ENCRYPTION_KEY
 - [ ] Create licenses table schema
 - [ ] Write migration files
 - [ ] Create required indexes (photographer lookup, license verification)
@@ -224,7 +225,7 @@ it('uses AES-256-CBC cipher', async () => {
 - [ ] Emit PaymentDistributed event
 - [ ] Write Hardhat unit tests
 - [ ] Test edge cases: zero amount, same address for both parties
-- [ ] Security review: reentrancy, overflow
+- [ ] Security review: access control, zero address validation, event emission
 - [ ] Deploy to Base Sepolia testnet
 - [ ] Verify contract on Basescan
 - [ ] Test with real transactions on testnet
@@ -358,6 +359,7 @@ NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS
 PLATFORM_TREASURY_ADDRESS
 FACILITATOR_URL
 FACILITATOR_PRIVATE_KEY
+MASTER_ENCRYPTION_KEY
 ```
 
 ### Commands
