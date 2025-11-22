@@ -1,5 +1,8 @@
 name: CI
 
+env:
+  NEXT_PUBLIC_PRIVY_APP_ID: cmiadqb0l00xzky0cfbtgj19o
+
 on:
   push:
     branches: [main]
@@ -38,6 +41,4 @@ jobs:
 
       - name: Build
         run: pnpm --filter web build
-        env:
-          NEXT_PUBLIC_PRIVY_APP_ID: ${{ env.NEXT_PUBLIC_PRIVY_APP_ID }}
 
