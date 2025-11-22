@@ -1,0 +1,30 @@
+{
+  "name": "@eth-global/contracts",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "forge test && hardhat test",
+    "test:hardhat": "hardhat test",
+    "test:forge": "forge test",
+    "deploy": "hardhat run scripts/deploy.ts",
+    "clean": "hardhat clean && forge clean"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.1"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@typechain/ethers-v6": "^0.5.1",
+    "@typechain/hardhat": "^9.1.0",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "^20.10.6",
+    "chai": "^4.3.10",
+    "hardhat": "^2.19.4",
+    "ts-node": "^10.9.2",
+    "typechain": "^8.3.2",
+    "typescript": "^5.3.3"
+  }
+}
