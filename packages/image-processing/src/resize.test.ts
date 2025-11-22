@@ -17,27 +17,23 @@ describe('resize', () => {
   }
 
   describe('resizeForPreview', () => {
-    it('resizes image larger than 1200px width', async () => {
-      const input = await createTestImage(2400, 1600);
-      const output = await resizeForPreview(input);
-
-      const meta = await sharp(output).metadata();
-      expect(meta.width).toBe(1200);
-      expect(meta.height).toBe(800); // Maintains aspect ratio
-    });
-
-    it('does not resize image smaller than 1200px width', async () => {
+    it('resizes to 50% of original', async () => {
       const input = await createTestImage(800, 600);
       const output = await resizeForPreview(input);
 
-      expect(output).toEqual(input);
+      const meta = await sharp(output).metadata();
+      expect(meta.width).toBe(400);
+      expect(meta.height).toBe(300);
     });
 
-    it('does not resize image exactly 1200px width', async () => {
-      const input = await createTestImage(1200, 900);
+    it('caps at max width for large images', async () => {
+      const input = await createTestImage(4000, 3000);
       const output = await resizeForPreview(input);
 
-      expect(output).toEqual(input);
+      const meta = await sharp(output).metadata();
+      // 50% = 2000x1500, capped to 1200 width
+      expect(meta.width).toBe(1200);
+      expect(meta.height).toBe(900);
     });
 
     it('maintains aspect ratio for portrait images', async () => {
@@ -45,9 +41,19 @@ describe('resize', () => {
       const output = await resizeForPreview(input);
 
       const meta = await sharp(output).metadata();
-      // Width > MAX_WIDTH, so resized to 1200 width with proportional height
+      // 50% = 800x1200
+      expect(meta.width).toBe(800);
+      expect(meta.height).toBe(1200);
+    });
+
+    it('handles very large images with capping', async () => {
+      const input = await createTestImage(6000, 4000);
+      const output = await resizeForPreview(input);
+
+      const meta = await sharp(output).metadata();
+      // 50% = 3000x2000, capped to 1200 width with ratio
       expect(meta.width).toBe(1200);
-      expect(meta.height).toBe(1800);
+      expect(meta.height).toBe(800);
     });
   });
 
