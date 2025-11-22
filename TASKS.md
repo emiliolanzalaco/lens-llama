@@ -149,16 +149,16 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `feature/synapse-storage` | **Assigned:** _unclaimed_
 
 ### 2.2 Image Processing
-- [ ] Install Sharp
-- [ ] Create watermark function: diagonal "LensLlama" text, semi-transparent
-- [ ] Create resize function: max 1200px width, maintain aspect ratio
-- [ ] Create AES-256-CBC encryption utility (see TECHNICAL_SPEC for code)
-- [ ] Create matching decryption utility
-- [ ] Write unit tests for each function
-- [ ] Test with JPEG, PNG, WebP formats
-- [ ] Test edge cases: very large images, small images
+- [x] Install Sharp
+- [x] Create watermark function: diagonal "LensLlama" text, semi-transparent
+- [x] Create resize function: max 1200px width, maintain aspect ratio
+- [x] Create AES-256-CBC encryption utility (see TECHNICAL_SPEC for code)
+- [x] Create matching decryption utility
+- [x] Write unit tests for each function
+- [x] Test with JPEG, PNG, WebP formats
+- [x] Test edge cases: very large images, small images
 
-**Branch:** `feature/image-processing` | **Assigned:** _unclaimed_
+**Branch:** `feature/image-processing` | **Assigned:** _complete_
 
 ### 2.3 Upload API Endpoint
 - [ ] Create POST /api/upload route handler
