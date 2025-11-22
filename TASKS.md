@@ -189,12 +189,12 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 ## Phase 3: Browse & Display
 
 ### 3.1 Images List API
-- [ ] Create GET /api/images route handler
-- [ ] Query all images from database
-- [ ] Return: watermarked_cid, title, price, photographer_address, id
-- [ ] Order by created_at DESC
-- [ ] Write integration tests
-- [ ] Test empty database case
+- [x] Create GET /api/images route handler
+- [x] Query all images from database
+- [x] Return: watermarked_cid, title, price, photographer_address, id
+- [x] Order by created_at DESC
+- [x] Write integration tests
+- [x] Test empty database case
 
 **Branch:** `feature/images-list-api` | **Assigned:** _unclaimed_
 
