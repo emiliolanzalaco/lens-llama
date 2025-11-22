@@ -122,30 +122,31 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `setup/database` | **Assigned:** _complete_
 
 ### 1.3 Privy Authentication
-- [ ] Install Privy SDK (@privy-io/react-auth)
-- [ ] Create PrivyProvider wrapper component
-- [ ] Configure login methods: email, Google, external wallet
-- [ ] Enable embedded wallet creation for email/Google users
-- [ ] Create useAuth hook exposing user and wallet
-- [ ] Write tests for auth state management
-- [ ] Manually test login/logout flow
+- [x] Install Privy SDK (@privy-io/react-auth)
+- [x] Create PrivyProvider wrapper component
+- [x] Configure login methods: email, Google, external wallet
+- [x] Enable embedded wallet creation for email/Google users
+- [x] Simple UI using ShadcnCn/ui MCP components for authentication form
+- [x] Create useAuth hook exposing user and wallet
+- [x] Write tests for auth state management
+- [x] Manually test login/logout flow
 
-**Branch:** `feature/privy-auth` | **Assigned:** _unclaimed_
+**Branch:** `feature/privy-auth` | **Assigned:** _in progress_
 
 ---
 
 ## Phase 2: Storage & Upload
 
 ### 2.1 Synapse SDK Integration
-- [ ] Install @filoz/synapse-sdk and ethers v6
-- [ ] Create Synapse client singleton with private key config
-- [ ] Implement upload function (see TECHNICAL_SPEC for encryption flow)
-- [ ] Implement download function with decryption
-- [ ] Add error handling and retry logic for network failures
-- [ ] Write integration tests with Filecoin testnet
-- [ ] Test full upload → download round-trip
+- [x] Install @filoz/synapse-sdk
+- [x] Create Synapse client singleton with private key config
+- [x] Implement upload function (see TECHNICAL_SPEC for encryption flow)
+- [x] Implement download function with decryption
+- [x] Add error handling and retry logic for network failures
+- [x] Write unit tests for client configuration
+- [ ] Test full upload → download round-trip with Filecoin testnet
 
-**Branch:** `feature/synapse-storage` | **Assigned:** _unclaimed_
+**Branch:** `feature/synapse-storage` | **Assigned:** _in progress_
 
 ### 2.2 Image Processing
 - [x] Install Sharp
@@ -160,17 +161,18 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `feature/image-processing` | **Assigned:** _complete_
 
 ### 2.3 Upload API Endpoint
-- [ ] Create POST /api/upload route handler
-- [ ] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
-- [ ] Generate watermarked preview with Sharp
-- [ ] Encrypt full resolution with AES-256
-- [ ] Upload both to Filecoin via Synapse SDK
-- [ ] Save to database: CIDs, encryption key, metadata
-- [ ] Return encrypted_cid, watermarked_cid, id
-- [ ] Write integration tests for success and error cases
+- [x] Create POST /api/upload route handler
+- [x] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
+- [x] Validate request body with Zod schema (title, price, photographerAddress, tags)
+- [x] Generate watermarked preview with Sharp
+- [x] Encrypt full resolution with AES-256
+- [x] Upload both to Filecoin via Synapse SDK
+- [x] Save to database: CIDs, encryption key, metadata
+- [x] Return encrypted_cid, watermarked_cid, id
+- [x] Write integration tests for success and error cases
 - [ ] Add rate limiting
 
-**Branch:** `feature/upload-api` | **Assigned:** _unclaimed_
+**Branch:** `feature/upload-api` | **Assigned:** _in progress_
 
 ### 2.4 Upload Page UI
 - [ ] Create /upload page (protected - requires Privy auth)
