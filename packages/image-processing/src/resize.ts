@@ -23,9 +23,7 @@ export async function resizeForPreview(imageBuffer: Buffer): Promise<Buffer> {
   }
 
   return image
-    .resize(targetWidth, targetHeight, {
-      fit: 'fill',
-    })
+    .resize(targetWidth, targetHeight)
     .toBuffer();
 }
 
