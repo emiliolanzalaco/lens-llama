@@ -2,6 +2,7 @@ name: CI
 
 env:
   NEXT_PUBLIC_PRIVY_APP_ID: cmiadqb0l00xzky0cfbtgj19o
+  POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
 
 on:
   push:
