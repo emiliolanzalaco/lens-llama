@@ -2,7 +2,7 @@
 pragma solidity ^0.8.23;
 
 import "forge-std/Test.sol";
-import "../contracts/PaymentToken.sol";
+import "../../contracts/PaymentToken.sol";
 
 contract PaymentTokenTest is Test {
     PaymentToken token;
