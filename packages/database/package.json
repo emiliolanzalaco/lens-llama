@@ -22,7 +22,7 @@
         "vitest": "^4.0.13"
     },
     "dependencies": {
-        "@vercel/postgres": "^0.10.0",
+        "@neondatabase/serverless": "^0.10.4",
         "drizzle-orm": "^0.44.7"
     }
 }

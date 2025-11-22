@@ -117,9 +117,9 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 - [x] Write migration files
 - [x] Create required indexes (photographer lookup, license verification)
 - [x] Write integration tests for database operations
-- [ ] Test connection to Vercel Postgres
+- [x] Test connection to Neon Postgres
 
-**Branch:** `setup/database` | **Assigned:** _in progress_
+**Branch:** `setup/database` | **Assigned:** _complete_
 
 ### 1.3 Privy Authentication
 - [ ] Install Privy SDK (@privy-io/react-auth)
