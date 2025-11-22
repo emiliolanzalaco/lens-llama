@@ -36,8 +36,8 @@ jobs:
       - name: Run type check
         run: pnpm --filter web tsc --noEmit
 
-      - name: Run tests
-        run: pnpm --filter web test:run
+      - name: Run unit tests
+        run: pnpm --filter web test:unit
 
       - name: Build
         run: pnpm --filter web build

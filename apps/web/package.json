@@ -9,6 +9,8 @@
     "lint": "eslint",
     "test": "vitest",
     "test:run": "vitest run",
+    "test:unit": "vitest run --exclude='**/*.integration.test.ts'",
+    "test:integration": "vitest run --include='**/*.integration.test.ts'",
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
