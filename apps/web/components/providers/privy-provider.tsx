@@ -4,10 +4,11 @@ import { PrivyProvider as BasePrivyProvider } from '@privy-io/react-auth';
 import { base } from 'viem/chains';
 
 export function PrivyProvider({ children }: { children: React.ReactNode }) {
-  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID || "test-app-id";
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
-  if (!process.env.NEXT_PUBLIC_PRIVY_APP_ID) {
+  if (!appId) {
     console.warn('NEXT_PUBLIC_PRIVY_APP_ID is not set, using fallback');
+    throw new Error('NEXT_PUBLIC_PRIVY_APP_ID is not set');
   }
 
   return (
