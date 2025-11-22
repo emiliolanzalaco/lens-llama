@@ -75,6 +75,26 @@ it('uses AES-256-CBC cipher', async () => {
 - Avoid mocking internals
 - Tests should survive refactoring
 
+### Test File Location
+
+**Colocate tests with the code they test.** Do not use a separate `__tests__` folder.
+
+```
+components/
+  ImageCard.tsx
+  ImageCard.test.tsx    ✅ colocated
+
+lib/
+  encryption.ts
+  encryption.test.ts    ✅ colocated
+
+app/api/images/
+  route.ts
+  route.test.ts         ✅ colocated
+```
+
+Naming: `[filename].test.ts` or `[filename].test.tsx`
+
 ---
 
 ## Phase 1: Foundation
