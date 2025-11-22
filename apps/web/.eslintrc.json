@@ -1,0 +1,5 @@
+{
+    "extends": [
+        "@lens-llama/config/eslint"
+    ]
+}
