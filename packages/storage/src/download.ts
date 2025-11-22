@@ -14,7 +14,7 @@ export async function downloadFromFilecoin(pieceCid: string): Promise<Buffer> {
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const data = await synapse.download(pieceCid);
+      const data = await synapse.storage.download(pieceCid);
       return Buffer.from(data);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
