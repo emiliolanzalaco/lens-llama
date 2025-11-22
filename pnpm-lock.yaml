@@ -35,6 +35,15 @@ importers:
 
   apps/web:
     dependencies:
+      '@lens-llama/database':
+        specifier: workspace:*
+        version: link:../../packages/database
+      '@lens-llama/image-processing':
+        specifier: workspace:*
+        version: link:../../packages/image-processing
+      '@lens-llama/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -63,9 +72,6 @@ importers:
       '@lens-llama/config':
         specifier: workspace:*
         version: link:../../packages/config
-      '@lens-llama/database':
-        specifier: workspace:*
-        version: link:../../packages/database
       '@lens-llama/shared':
         specifier: workspace:*
         version: link:../../packages/shared

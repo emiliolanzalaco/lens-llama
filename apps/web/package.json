@@ -12,6 +12,9 @@
     "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
+    "@lens-llama/database": "workspace:*",
+    "@lens-llama/image-processing": "workspace:*",
+    "@lens-llama/storage": "workspace:*",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.378.0",
@@ -23,7 +26,6 @@
   },
   "devDependencies": {
     "@lens-llama/config": "workspace:*",
-    "@lens-llama/database": "workspace:*",
     "@lens-llama/shared": "workspace:*",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.0",
