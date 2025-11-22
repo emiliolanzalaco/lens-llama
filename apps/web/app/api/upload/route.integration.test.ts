@@ -73,10 +73,7 @@ describe('POST /api/upload integration', () => {
     const response = await POST(createRequest(formData));
     const data = await response.json();
 
-    if (response.status !== 200) {
-      console.error('Error response:', data);
-    }
-    expect(response.status).toBe(200);
+    expect(response.status, `Expected 200 but got ${response.status}: ${JSON.stringify(data)}`).toBe(200);
     expect(data.id).toBeDefined();
     createdImageId = data.id;
 

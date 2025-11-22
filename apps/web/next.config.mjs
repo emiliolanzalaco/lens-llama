@@ -2,7 +2,7 @@
 const nextConfig = {
     webpack: (config, { isServer }) => {
         if (isServer) {
-            config.externals.push('sharp');
+            config.externals = [...(config.externals || []), 'sharp'];
         }
         return config;
     },

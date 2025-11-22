@@ -13,6 +13,13 @@ import { uploadToFilecoin } from '@lens-llama/storage';
 const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 interface UploadRequest {
   file: File;
   title: string;
@@ -30,22 +37,22 @@ function validateRequest(formData: FormData): UploadRequest {
   const priceRaw = formData.get('price') as string | null;
   const photographerAddress = formData.get('photographerAddress') as string | null;
 
-  if (!file) throw new Error('File is required');
-  if (!title) throw new Error('Title is required');
-  if (!priceRaw) throw new Error('Price is required');
-  if (!photographerAddress) throw new Error('Photographer address is required');
+  if (!file) throw new ValidationError('File is required');
+  if (!title) throw new ValidationError('Title is required');
+  if (!priceRaw) throw new ValidationError('Price is required');
+  if (!photographerAddress) throw new ValidationError('Photographer address is required');
 
   if (file.size > MAX_FILE_SIZE) {
-    throw new Error(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+    throw new ValidationError(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
   }
 
   if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Invalid file type. Allowed: JPEG, PNG, WebP');
+    throw new ValidationError('Invalid file type. Allowed: JPEG, PNG, WebP');
   }
 
   const price = parseFloat(priceRaw);
   if (isNaN(price) || price <= 0) {
-    throw new Error('Invalid price');
+    throw new ValidationError('Invalid price');
   }
 
   const tags = tagsRaw
@@ -68,6 +75,12 @@ async function processImage(imageBuffer: Buffer) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Fail fast if server is misconfigured
+    const masterKey = process.env.MASTER_ENCRYPTION_KEY;
+    if (!masterKey) {
+      throw new Error('Server configuration error: MASTER_ENCRYPTION_KEY not set');
+    }
+
     const formData = await request.formData();
     const data = validateRequest(formData);
 
@@ -78,9 +91,6 @@ export async function POST(request: NextRequest) {
       uploadToFilecoin(encrypted),
       uploadToFilecoin(watermarked),
     ]);
-
-    const masterKey = process.env.MASTER_ENCRYPTION_KEY;
-    if (!masterKey) throw new Error('MASTER_ENCRYPTION_KEY not configured');
 
     const encryptedKey = encryptWithMasterKey(keyToHex(encryptionKey), masterKey);
 
@@ -107,7 +117,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
-    const status = message.includes('required') || message.includes('Invalid') ? 400 : 500;
+    const status = error instanceof ValidationError ? 400 : 500;
     return NextResponse.json({ error: message }, { status });
   }
 }
