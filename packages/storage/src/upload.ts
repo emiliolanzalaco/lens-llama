@@ -9,11 +9,14 @@ export interface UploadResult {
 }
 
 /**
- * Calculate PIECEID locally using CommP algorithm
+ * Calculate PieceCID locally using CommP algorithm
  */
-function calculatePieceCid(data: Uint8Array): string {
+function calculatePieceCid(data: Uint8Array): { cid: PieceCID; str: string } {
   const piece = Piece.fromPayload(data);
-  return piece.link.toString();
+  return {
+    cid: piece.link as unknown as PieceCID,
+    str: piece.link.toString(),
+  };
 }
 
 /**
@@ -26,17 +29,17 @@ export async function uploadToFilecoin(data: Buffer): Promise<UploadResult> {
 
   // Calculate CID locally - this is instant
   console.log(`[Filecoin] Calculating CID for ${data.length} bytes`);
-  const pieceCid = calculatePieceCid(dataArray);
-  console.log(`[Filecoin] Local CID: ${pieceCid}`);
+  const { cid, str: pieceCidStr } = calculatePieceCid(dataArray);
+  console.log(`[Filecoin] Local CID: ${pieceCidStr}`);
 
   // Fire off upload in background (don't await)
-  uploadInBackground(dataArray, pieceCid).catch(error => {
-    console.error(`[Filecoin] Background upload failed for ${pieceCid}:`, error);
+  uploadInBackground(dataArray, cid, pieceCidStr).catch(error => {
+    console.error(`[Filecoin] Background upload failed for ${pieceCidStr}:`, error);
   });
 
   // Return immediately with precomputed CID
   return {
-    pieceCid,
+    pieceCid: pieceCidStr,
     size: data.length,
   };
 }
@@ -44,8 +47,8 @@ export async function uploadToFilecoin(data: Buffer): Promise<UploadResult> {
 /**
  * Background upload with retries
  */
-async function uploadInBackground(data: Uint8Array, pieceCid: string): Promise<void> {
-  console.log(`[Filecoin] Starting background upload for ${pieceCid}`);
+async function uploadInBackground(data: Uint8Array, pieceCid: PieceCID, pieceCidStr: string): Promise<void> {
+  console.log(`[Filecoin] Starting background upload for ${pieceCidStr}`);
   const start = Date.now();
 
   const synapse = await getSynapseClient();
@@ -58,9 +61,9 @@ async function uploadInBackground(data: Uint8Array, pieceCid: string): Promise<v
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      console.log(`[Filecoin] Background upload attempt ${attempt} for ${pieceCid}`);
-      await storage.upload(data, { pieceCid: pieceCid as unknown as PieceCID });
-      console.log(`[Filecoin] Background upload complete in ${Date.now() - start}ms for ${pieceCid}`);
+      console.log(`[Filecoin] Background upload attempt ${attempt} for ${pieceCidStr}`);
+      await storage.upload(data, { pieceCid });
+      console.log(`[Filecoin] Background upload complete in ${Date.now() - start}ms for ${pieceCidStr}`);
       return;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
