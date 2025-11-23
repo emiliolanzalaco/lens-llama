@@ -12,7 +12,7 @@ const fontSans = FontSans({
 });
 
 export const metadata: Metadata = {
-  title: "LensLlama - Pay-per-use Stock Photography",
+  title: "LensLlama - Image Licensing",
   description: "Decentralized stock photography marketplace with x402 micropayments",
 };
 
