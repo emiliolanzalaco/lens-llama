@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useX402Payment } from '@/lib/hooks/use-x402-payment';
 
@@ -30,11 +31,12 @@ export default function ImageDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState(false);
+  const [purchased, setPurchased] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
 
-  const { authenticated, login, walletAddress } = useAuth();
+  const { authenticated, login } = useAuth();
   const { purchaseImage, hasWallet } = useX402Payment();
 
-  // Fetch image metadata (will return 402 with payment requirements)
   useEffect(() => {
     async function fetchImage() {
       try {
@@ -45,17 +47,14 @@ export default function ImageDetailPage() {
           return;
         }
 
-        // 402 response contains metadata + payment requirements
         if (response.status === 402) {
           const data = await response.json();
           setImage(data);
           return;
         }
 
-        // If 200, user already owns it - could redirect to download
         if (response.ok) {
-          // Already licensed - show download option
-          setError('You already own this image');
+          setPurchased(true);
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load image');
@@ -74,7 +73,7 @@ export default function ImageDetailPage() {
     }
 
     if (!hasWallet) {
-      setError('No wallet available. Please connect a wallet.');
+      setError('No wallet available');
       return;
     }
 
@@ -87,17 +86,18 @@ export default function ImageDetailPage() {
       const result = await purchaseImage(imageId, image.paymentRequirements);
 
       if (result.success && result.imageBlob) {
-        // Download the purchased image
         const url = URL.createObjectURL(result.imageBlob);
+        setDownloadUrl(url);
+        setPurchased(true);
+
+        // Auto-download
         const a = document.createElement('a');
         a.href = url;
         a.download = `${image.title}.jpg`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        URL.revokeObjectURL(url);
       } else {
-        // Show specific error reason
         const errorMsg = result.error || 'Purchase failed';
         if (errorMsg.includes('insufficient_funds')) {
           setError('Insufficient USDC balance');
@@ -112,97 +112,125 @@ export default function ImageDetailPage() {
     }
   };
 
+  const handleDownload = () => {
+    if (downloadUrl && image) {
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${image.title}.jpg`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-zinc-500">Loading...</p>
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
+          <div className="grid gap-12 md:grid-cols-2">
+            <div className="aspect-square bg-[#FDF6E3]" />
+            <div className="space-y-6">
+              <div className="h-8 w-3/4 bg-[#FDF6E3]" />
+              <div className="h-4 w-1/2 bg-[#FDF6E3]" />
+              <div className="h-12 w-1/3 bg-[#FDF6E3]" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!image) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-red-500">{error || 'Image not found'}</p>
+      <div className="min-h-screen bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
+          <p className="text-red-600">{error || 'Image not found'}</p>
+          <Link href="/" className="mt-4 inline-block text-neutral-600 hover:text-neutral-950">
+            Back to gallery
+          </Link>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-zinc-50 dark:bg-black">
-      <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Watermarked preview */}
-        <div className="overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-800">
-          <img
-            src={`/api/images/${imageId}/preview`}
-            alt={image.title}
-            className="w-full object-contain"
-            style={{ maxHeight: '600px' }}
-          />
-        </div>
-
-        <div className="mt-6">
-          <h1 className="text-3xl font-bold text-zinc-900 dark:text-white">
-            {image.title}
-          </h1>
-
-          {image.description && (
-            <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-              {image.description}
-            </p>
-          )}
-
-          <div className="mt-4 flex items-center gap-4 text-sm text-zinc-500 dark:text-zinc-400">
-            <span>
-              {image.width} x {image.height}
-            </span>
-            <span>
-              By: {image.photographerAddress.slice(0, 6)}...
-              {image.photographerAddress.slice(-4)}
-            </span>
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
+        <div className="grid gap-12 md:grid-cols-2">
+          {/* Image - left column */}
+          <div>
+            <img
+              src={`/api/images/${imageId}/preview`}
+              alt={image.title}
+              className="w-full"
+            />
           </div>
 
-          <div className="mt-6 rounded-lg bg-white p-6 shadow dark:bg-zinc-800">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-2xl font-bold text-zinc-900 dark:text-white">
-                  ${image.priceUsdc} USDC
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Full resolution, no watermark
-                </p>
-              </div>
+          {/* Details - right column */}
+          <div className="flex flex-col">
+            <h1 className="text-3xl font-medium text-neutral-950">
+              {image.title}
+            </h1>
 
-              {!authenticated ? (
+            {image.description && (
+              <p className="mt-4 text-neutral-600">
+                {image.description}
+              </p>
+            )}
+
+            {/* Price - prominent */}
+            <p className="mt-8 text-4xl font-medium text-neutral-950">
+              ${image.priceUsdc} USDC
+            </p>
+
+            {/* Action button */}
+            <div className="mt-8">
+              {purchased ? (
+                <button
+                  onClick={handleDownload}
+                  className="bg-[#FDF6E3] px-6 py-4 text-base font-medium text-neutral-950 hover:bg-[#f5edd8]"
+                >
+                  Download
+                </button>
+              ) : !authenticated ? (
                 <button
                   onClick={() => login()}
-                  className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700"
+                  className="bg-[#FDF6E3] px-6 py-4 text-base font-medium text-neutral-950 hover:bg-[#f5edd8]"
                 >
-                  Connect Wallet to Buy
+                  Sign In to Buy
                 </button>
               ) : (
                 <button
                   onClick={handlePurchase}
                   disabled={purchasing}
-                  className="rounded-lg bg-blue-600 px-6 py-3 font-medium text-white hover:bg-blue-700 disabled:bg-zinc-300 disabled:text-zinc-500"
+                  className="bg-[#FDF6E3] px-6 py-4 text-base font-medium text-neutral-950 hover:bg-[#f5edd8] disabled:bg-neutral-200 disabled:text-neutral-400"
                 >
-                  {purchasing ? 'Processing...' : `Buy for $${image.priceUsdc}`}
+                  {purchasing ? 'Completing purchase...' : 'Buy License'}
                 </button>
               )}
             </div>
 
-            {authenticated && (
-              <p className="mt-2 text-right text-xs text-zinc-400">
-                {walletAddress?.slice(0, 6)}...{walletAddress?.slice(-4)}
+            {/* Error */}
+            {error && (
+              <p className="mt-4 text-red-600">
+                {error}
               </p>
             )}
-          </div>
 
-          {error && (
-            <div className="mt-4 rounded-lg bg-red-50 p-4 text-red-600 dark:bg-red-900/20 dark:text-red-400">
-              {error}
+            {/* Success message */}
+            {purchased && !error && (
+              <p className="mt-4 text-green-600">
+                License purchased successfully
+              </p>
+            )}
+
+            {/* Metadata - tertiary */}
+            <div className="mt-auto pt-12">
+              <p className="text-xs text-neutral-400">
+                {image.width} x {image.height} px
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
