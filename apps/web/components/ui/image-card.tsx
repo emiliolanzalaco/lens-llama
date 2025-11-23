@@ -38,7 +38,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
 
   return (
     <Link
-      href={`/image/${image.id}`}
+      href={`/images/${image.id}`}
       className={`relative group overflow-hidden bg-gray-200 cursor-pointer ${getGridClasses(image.size)}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
