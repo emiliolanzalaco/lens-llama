@@ -5,7 +5,17 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Verify blob token is configured
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error('[Upload] BLOB_READ_WRITE_TOKEN is not set');
+    return NextResponse.json(
+      { error: 'Blob storage not configured' },
+      { status: 500 }
+    );
+  }
+
   const body = (await request.json()) as HandleUploadBody;
+  console.log('[Upload] Handling upload request, type:', body.type);
 
   try {
     const jsonResponse = await handleUpload({
