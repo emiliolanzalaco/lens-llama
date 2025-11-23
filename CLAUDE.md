@@ -82,8 +82,8 @@ Each commit should represent one logical change. If you need "and" in your commi
 ### Conventional Commits
 Use prefixes: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`
 
-### Short Messages
-Keep commit messages concise. The diff tells the "what", the message should tell the "why".
+### Concise Messages
+Keep commit messages short and to the point. No co-authors, no generated-by footers. One line when possible.
 
 ## Code Review
 
