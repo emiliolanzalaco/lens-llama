@@ -1,5 +1,12 @@
 # Claude Code Guidelines
 
+## Project Documentation
+
+- **docs/TECHNICAL_SPEC.md** - Primary technical reference (architecture, schemas, implementation details)
+- **docs/TASKS.md** - Task tracking and development workflow
+- **docs/STYLE_GUIDE.md** - UI/UX design system and visual guidelines
+- **docs/VALUE_PROPOSITION.md** - Product value proposition and x402 justification
+
 ## Code Principles
 
 ### DRY (Don't Repeat Yourself)
