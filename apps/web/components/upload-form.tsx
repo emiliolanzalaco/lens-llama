@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { FileDropzone } from '@/components/ui/file-dropzone';
 import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
+import { UsernameClaimModal } from '@/components/username-claim-modal';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -40,6 +41,8 @@ export function UploadForm() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -83,30 +86,8 @@ export function UploadForm() {
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSubmitError(null);
-
-    if (!file) {
-      setErrors((prev) => ({ ...prev, file: 'Image is required' }));
-      return;
-    }
-
-    const result = uploadSchema.safeParse(formData);
-    if (!result.success) {
-      const fieldErrors: FormErrors = {};
-      result.error.errors.forEach((err) => {
-        const field = err.path[0] as keyof FormErrors;
-        fieldErrors[field] = err.message;
-      });
-      setErrors(fieldErrors);
-      return;
-    }
-
-    if (!walletAddress) {
-      setSubmitError('Wallet not connected');
-      return;
-    }
+  const performUpload = async () => {
+    if (!file || !walletAddress) return;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -147,60 +128,132 @@ export function UploadForm() {
     }
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError(null);
+
+    if (!file) {
+      setErrors((prev) => ({ ...prev, file: 'Image is required' }));
+      return;
+    }
+
+    const result = uploadSchema.safeParse(formData);
+    if (!result.success) {
+      const fieldErrors: FormErrors = {};
+      result.error.errors.forEach((err) => {
+        const field = err.path[0] as keyof FormErrors;
+        fieldErrors[field] = err.message;
+      });
+      setErrors(fieldErrors);
+      return;
+    }
+
+    if (!walletAddress) {
+      setSubmitError('Wallet not connected');
+      return;
+    }
+
+    // Check if user already has a username
+    try {
+      const checkResponse = await fetch('/api/username/check-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userAddress: walletAddress }),
+      });
+
+      if (checkResponse.ok) {
+        const { hasUsername } = await checkResponse.json();
+
+        if (!hasUsername) {
+          // First upload, show username modal before uploading
+          setPendingUpload(true);
+          setShowUsernameModal(true);
+          return;
+        }
+      }
+
+      // User has username or check failed, proceed with upload
+      await performUpload();
+    } catch (error) {
+      // If check fails, proceed with upload anyway
+      await performUpload();
+    }
+  };
+
+  const handleUsernameSuccess = async (username: string, ensName: string) => {
+    console.log('Username claimed:', username, ensName);
+    setShowUsernameModal(false);
+    setPendingUpload(false);
+
+    // Now perform the upload
+    await performUpload();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <FileDropzone
-        onFileSelect={handleFileSelect}
-        preview={preview}
-        error={errors.file}
-      />
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <FileDropzone
+          onFileSelect={handleFileSelect}
+          preview={preview}
+          error={errors.file}
+        />
 
-      <FormField
-        label="Title"
-        name="title"
-        value={formData.title}
-        onChange={handleInputChange}
-        error={errors.title}
-        placeholder="Enter image title"
-      />
+        <FormField
+          label="Title"
+          name="title"
+          value={formData.title}
+          onChange={handleInputChange}
+          error={errors.title}
+          placeholder="Enter image title"
+        />
 
-      <FormField
-        label="Description"
-        name="description"
-        value={formData.description}
-        onChange={handleInputChange}
-        placeholder="Describe your image"
-        optional
-        multiline
-      />
+        <FormField
+          label="Description"
+          name="description"
+          value={formData.description}
+          onChange={handleInputChange}
+          placeholder="Describe your image"
+          optional
+          multiline
+        />
 
-      <FormField
-        label="Tags"
-        name="tags"
-        value={formData.tags}
-        onChange={handleInputChange}
-        placeholder="nature, landscape, sunset"
-        optional
-      />
+        <FormField
+          label="Tags"
+          name="tags"
+          value={formData.tags}
+          onChange={handleInputChange}
+          placeholder="nature, landscape, sunset"
+          optional
+        />
 
-      <FormField
-        label="Price (USDC)"
-        name="price"
-        value={formData.price}
-        onChange={handleInputChange}
-        error={errors.price}
-        placeholder="9.99"
-      />
+        <FormField
+          label="Price (USDC)"
+          name="price"
+          value={formData.price}
+          onChange={handleInputChange}
+          error={errors.price}
+          placeholder="9.99"
+        />
 
-      {isUploading && <ProgressBar progress={uploadProgress} />}
+        {isUploading && <ProgressBar progress={uploadProgress} />}
 
-      {submitError && (
-        <p className="text-sm text-red-600">{submitError}</p>
+        {submitError && (
+          <p className="text-sm text-red-600">{submitError}</p>
+        )}
+
+        <Button type="submit" disabled={isUploading} className="w-full">
+          {isUploading ? 'Uploading...' : 'Upload Image'}
+        </Button>
+      </form>
+
+      {showUsernameModal && walletAddress && (
+        <UsernameClaimModal
+          isOpen={showUsernameModal}
+          onClose={() => setShowUsernameModal(false)}
+          userAddress={walletAddress}
+          onSuccess={handleUsernameSuccess}
+        />
       )}
-
-      <Button type="submit" disabled={isUploading} className="w-full">
-        {isUploading ? 'Uploading...' : 'Upload Image'}
-      </Button>
-    </form>
+    </>
   );
 }

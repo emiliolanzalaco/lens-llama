@@ -76,6 +76,7 @@ export async function GET(request: Request) {
         title: true,
         priceUsdc: true,
         photographerAddress: true,
+        photographerUsername: true,
         // Explicitly exclude sensitive fields
         encryptedCid: false,
         encryptionKey: false,

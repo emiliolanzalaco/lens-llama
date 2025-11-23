@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, images, encryptWithMasterKey } from '@lens-llama/database';
+import { db, images, usernames, encryptWithMasterKey } from '@lens-llama/database';
 import {
   addWatermark,
   resizeForPreview,
@@ -10,6 +10,7 @@ import {
 } from '@lens-llama/image-processing';
 import { uploadToFilecoin } from '@lens-llama/storage';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -116,6 +117,13 @@ export async function POST(request: NextRequest) {
 
     const encryptedKey = encryptWithMasterKey(keyToHex(encryptionKey), masterKey);
 
+    console.log('[Upload] Checking for existing username...');
+    const [existingUsername] = await db
+      .select()
+      .from(usernames)
+      .where(eq(usernames.userAddress, data.photographerAddress.toLowerCase()))
+      .limit(1);
+
     console.log('[Upload] Saving to database...');
     const [image] = await db
       .insert(images)
@@ -124,6 +132,7 @@ export async function POST(request: NextRequest) {
         watermarkedCid: watermarkedResult.pieceCid,
         encryptionKey: encryptedKey,
         photographerAddress: data.photographerAddress,
+        photographerUsername: existingUsername?.username || null,
         title: data.title,
         description: data.description,
         tags: data.tags,
@@ -138,6 +147,8 @@ export async function POST(request: NextRequest) {
       id: image.id,
       encryptedCid: encryptedResult.pieceCid,
       watermarkedCid: watermarkedResult.pieceCid,
+      hasUsername: !!existingUsername,
+      isFirstUpload: !existingUsername,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';

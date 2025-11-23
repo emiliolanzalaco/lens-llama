@@ -64,14 +64,19 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
       </div>
       {/* Overlay */}
       <div className={`absolute inset-0 bg-black/30 transition-opacity duration-200 flex flex-col justify-between p-3 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex justify-between items-end">
-          {/* Optional: Minimal Text on hover if space allows */}
-          <div className="text-white opacity-90 hidden sm:block pr-2">
-            <p className="text-xs font-bold truncate w-24">{image.title}</p>
+        <div className="flex flex-col gap-1">
+          <div className="text-white opacity-90">
+            <p className="text-xs font-bold truncate">{image.title}</p>
+            {image.photographerUsername && (
+              <p className="text-xs opacity-80 truncate">
+                by {image.photographerUsername}.lensllama.eth
+              </p>
+            )}
           </div>
-
-          <div className="flex gap-2 ml-auto">
-            <p className="text-xs font-bold truncate w-24">${image.priceUsdc}</p>
+        </div>
+        <div className="flex justify-end">
+          <div className="bg-white/90 px-2 py-1 rounded">
+            <p className="text-xs font-bold text-gray-900">${image.priceUsdc}</p>
           </div>
         </div>
       </div>
