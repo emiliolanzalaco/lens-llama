@@ -51,7 +51,10 @@ export async function verifyPayment(
 
   const response = await fetch(`${facilitatorUrl}/verify`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Bypass-Tunnel-Reminder': 'true',
+    },
     body: JSON.stringify({ paymentPayload, paymentRequirements }),
   });
 
@@ -82,7 +85,10 @@ export async function settlePayment(
 
   const response = await fetch(`${facilitatorUrl}/settle`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Bypass-Tunnel-Reminder': 'true',
+    },
     body: JSON.stringify({ paymentPayload, paymentRequirements }),
   });
 
