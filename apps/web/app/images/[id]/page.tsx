@@ -168,7 +168,7 @@ export default function ImageDetailPage() {
 
           {/* Details - right column */}
           <div className="flex flex-col">
-            <h1 className="text-3xl font-medium text-neutral-950">
+            <h1 className="text-4xl font-medium text-neutral-950">
               {image.title}
             </h1>
 
@@ -178,8 +178,8 @@ export default function ImageDetailPage() {
               </p>
             )}
 
-            {/* Price - prominent */}
-            <p className="mt-8 text-4xl font-medium text-neutral-950">
+            {/* Price */}
+            <p className="mt-8 text-2xl font-medium text-neutral-950">
               ${image.priceUsdc} USDC
             </p>
 
