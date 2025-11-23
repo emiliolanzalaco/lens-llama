@@ -11,9 +11,12 @@
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
+    "dotenv": "^17.2.3",
     "husky": "^9.1.7",
     "prettier": "^3.2.5",
-    "turbo": "^1.12.4"
+    "tsx": "^4.19.0",
+    "turbo": "^1.12.4",
+    "viem": "^2.39.3"
   },
   "packageManager": "pnpm@8.15.4",
   "engines": {

@@ -10,8 +10,16 @@ vi.mock('@lens-llama/database', () => ({
         returning: vi.fn().mockResolvedValue([{ id: 'test-uuid' }]),
       }),
     }),
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    }),
   },
   images: {},
+  usernames: {},
   encryptWithMasterKey: vi.fn().mockReturnValue('encrypted-key'),
 }));
 

@@ -123,6 +123,16 @@ describe('UploadForm', () => {
   });
 
   it('submits form successfully with valid data', async () => {
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ hasUsername: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'test-id' }),
+      });
+
     const { container } = render(<UploadForm />);
 
     // Create and select a file
@@ -147,10 +157,15 @@ describe('UploadForm', () => {
   });
 
   it('shows error message when upload fails', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: 'Upload failed' }),
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ hasUsername: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Upload failed' }),
+      });
 
     const { container } = render(<UploadForm />);
 

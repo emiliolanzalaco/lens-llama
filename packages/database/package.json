@@ -12,12 +12,16 @@
         "db:generate": "drizzle-kit generate",
         "db:migrate": "drizzle-kit migrate",
         "db:push": "drizzle-kit push",
-        "db:studio": "drizzle-kit studio"
+        "db:studio": "drizzle-kit studio",
+        "migrate:001": "tsx scripts/run-migration.ts",
+        "verify:migration": "tsx scripts/verify-migration.ts"
     },
     "devDependencies": {
         "@lens-llama/config": "workspace:*",
         "@types/node": "^20.12.12",
+        "dotenv": "^17.2.3",
         "drizzle-kit": "^0.31.7",
+        "tsx": "^4.19.0",
         "typescript": "^5.3.3",
         "vitest": "^4.0.13"
     },
