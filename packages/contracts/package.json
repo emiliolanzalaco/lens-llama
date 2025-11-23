@@ -2,13 +2,21 @@
     "name": "@lens-llama/contracts",
     "version": "0.0.0",
     "private": true,
+    "type": "module",
     "scripts": {
         "build": "hardhat compile",
-        "test": "hardhat test"
+        "test": "hardhat test",
+        "deploy:sepolia": "hardhat ignition deploy --network baseSepolia ignition/modules/RevenueDistributor.ts",
+        "deploy:mainnet": "hardhat ignition deploy --network base ignition/modules/RevenueDistributor.ts"
     },
     "devDependencies": {
-        "hardhat": "^2.22.0",
-        "@nomicfoundation/hardhat-toolbox": "^5.0.0",
-        "@nomicfoundation/hardhat-foundry": "^1.1.1"
+        "@nomicfoundation/hardhat-ignition": "^3.0.5",
+        "@nomicfoundation/hardhat-verify": "^3.0.7",
+        "dotenv": "^17.2.3",
+        "forge-std": "github:foundry-rs/forge-std#v1.9.7",
+        "hardhat": "^3.0.15"
+    },
+    "dependencies": {
+        "@openzeppelin/contracts": "^5.4.0"
     }
 }
