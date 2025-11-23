@@ -23,12 +23,17 @@ export function buildPaymentRequirements(
   image: ImageData,
   baseUrl: string
 ): PaymentRequirements {
-  const priceInMicroUsdc = Math.round(parseFloat(image.priceUsdc) * 1_000_000);
+  // Convert priceUsdc string to microUSDC using integer arithmetic to avoid floating-point errors
+  const [whole, fraction = ''] = image.priceUsdc.split('.');
+  const wholeMicro = BigInt(whole) * BigInt(1_000_000);
+  // Pad or trim the fraction to 6 digits (microUSDC precision)
+  const fractionMicro = BigInt((fraction + '000000').slice(0, 6));
+  const priceInMicroUsdc = (wholeMicro + fractionMicro).toString();
 
   return {
     scheme: 'exact',
     network: NETWORK,
-    maxAmountRequired: priceInMicroUsdc.toString(),
+    maxAmountRequired: priceInMicroUsdc,
     resource: `${baseUrl}/api/images/${image.id}`,
     description: `License for: ${image.title}`,
     mimeType: 'image/jpeg',
