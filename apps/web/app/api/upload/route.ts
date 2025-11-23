@@ -11,7 +11,7 @@ import {
 import { uploadToFilecoin } from '@lens-llama/storage';
 import { z } from 'zod';
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 class ValidationError extends Error {
@@ -90,25 +90,33 @@ async function processImage(imageBuffer: Buffer) {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[Upload] Starting upload...');
+
     // Fail fast if server is misconfigured
     const masterKey = process.env.MASTER_ENCRYPTION_KEY;
     if (!masterKey) {
-      throw new Error('Server configuration error: MASTER_ENCRYPTION_KEY not set');
+      console.error('MASTER_ENCRYPTION_KEY not set');
+      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
     }
 
+    console.log('[Upload] Parsing form data...');
     const formData = await request.formData();
     const data = validateRequest(formData);
 
+    console.log('[Upload] Processing image...');
     const imageBuffer = Buffer.from(await data.file.arrayBuffer());
     const { dimensions, watermarked, encrypted, encryptionKey } = await processImage(imageBuffer);
 
+    console.log('[Upload] Uploading to Filecoin...');
     const [encryptedResult, watermarkedResult] = await Promise.all([
       uploadToFilecoin(encrypted),
       uploadToFilecoin(watermarked),
     ]);
+    console.log('[Upload] Filecoin upload complete');
 
     const encryptedKey = encryptWithMasterKey(keyToHex(encryptionKey), masterKey);
 
+    console.log('[Upload] Saving to database...');
     const [image] = await db
       .insert(images)
       .values({
@@ -124,6 +132,7 @@ export async function POST(request: NextRequest) {
         height: dimensions.height,
       })
       .returning({ id: images.id });
+    console.log('[Upload] Complete! ID:', image.id);
 
     return NextResponse.json({
       id: image.id,
