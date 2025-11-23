@@ -71,7 +71,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
           </div>
 
           <div className="flex gap-2 ml-auto">
-            <p className="text-xs font-bold truncate w-24">{image.priceUsdc}</p>
+            <p className="text-xs font-bold truncate w-24">${image.priceUsdc}</p>
           </div>
         </div>
       </div>
