@@ -358,6 +358,17 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 
 **Branch:** `stretch/profiles` | **Assigned:** _unclaimed_
 
+### S4. Upload Job Queue (Scalability)
+- [ ] Investigate job queue solutions (BullMQ + Redis, or database-backed)
+- [ ] Add upload_status field to images table (pending, uploading, completed, failed)
+- [ ] Replace fire-and-forget with persistent job queue
+- [ ] Implement worker process for background uploads
+- [ ] Add retry logic with exponential backoff
+- [ ] Add monitoring/visibility for failed uploads
+- [ ] Write tests for queue operations
+
+**Branch:** `stretch/upload-queue` | **Assigned:** _unclaimed_
+
 ---
 
 ## Notes & Blockers
