@@ -74,9 +74,6 @@ importers:
       viem:
         specifier: ^2.39.3
         version: 2.39.3(typescript@5.9.3)(zod@3.25.76)
-      x402:
-        specifier: link:/Users/emiliolanzalaco/Documents/Code/x402/typescript/packages/x402
-        version: link:../../../x402/typescript/packages/x402
       zod:
         specifier: ^3.25.76
         version: 3.25.76
