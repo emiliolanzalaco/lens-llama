@@ -53,36 +53,36 @@ describe('FileDropzone', () => {
     const onFileSelect = vi.fn();
     render(<FileDropzone onFileSelect={onFileSelect} />);
 
-    const dropzone = screen.getByText('Drag and drop or click to upload').parentElement?.parentElement;
+    const dropzone = screen.getByTestId('dropzone');
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
 
-    fireEvent.drop(dropzone!, {
+    fireEvent.drop(dropzone, {
       dataTransfer: { files: [file] },
     });
 
     expect(onFileSelect).toHaveBeenCalledWith(file);
   });
 
-  it('shows drag state on dragover', () => {
+  it('indicates drag state on dragover', () => {
     const onFileSelect = vi.fn();
     render(<FileDropzone onFileSelect={onFileSelect} />);
 
-    const dropzone = screen.getByText('Drag and drop or click to upload').parentElement?.parentElement;
+    const dropzone = screen.getByTestId('dropzone');
 
-    fireEvent.dragOver(dropzone!);
-    expect(dropzone).toHaveClass('bg-[#F5EED6]');
+    fireEvent.dragOver(dropzone);
+    expect(dropzone).toHaveAttribute('data-dragging', 'true');
   });
 
   it('clears drag state on dragleave', () => {
     const onFileSelect = vi.fn();
     render(<FileDropzone onFileSelect={onFileSelect} />);
 
-    const dropzone = screen.getByText('Drag and drop or click to upload').parentElement?.parentElement;
+    const dropzone = screen.getByTestId('dropzone');
 
-    fireEvent.dragOver(dropzone!);
-    fireEvent.dragLeave(dropzone!);
+    fireEvent.dragOver(dropzone);
+    fireEvent.dragLeave(dropzone);
 
-    expect(dropzone).not.toHaveClass('bg-[#F5EED6]');
+    expect(dropzone).toHaveAttribute('data-dragging', 'false');
   });
 
   it('opens file dialog on click', () => {
@@ -92,8 +92,8 @@ describe('FileDropzone', () => {
     const input = document.querySelector('input[type="file"]') as HTMLInputElement;
     const clickSpy = vi.spyOn(input, 'click');
 
-    const dropzone = screen.getByText('Drag and drop or click to upload').parentElement?.parentElement;
-    fireEvent.click(dropzone!);
+    const dropzone = screen.getByTestId('dropzone');
+    fireEvent.click(dropzone);
 
     expect(clickSpy).toHaveBeenCalled();
   });

@@ -51,6 +51,8 @@ export function FileDropzone({
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
+        data-testid="dropzone"
+        data-dragging={isDragging}
         className={`
           relative cursor-pointer bg-[#FDF6E3] p-8 text-center
           ${isDragging ? 'bg-[#F5EED6]' : ''}
