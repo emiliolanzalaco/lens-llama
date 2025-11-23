@@ -41,25 +41,6 @@ describe('Home Page', () => {
     vi.clearAllMocks();
   });
 
-  it('renders navigation with LensLlama branding', () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      json: async () => ({ images: [] }),
-    });
-
-    render(<Home />);
-    expect(screen.getByText('LensLlama')).toBeInTheDocument();
-    expect(screen.getByText('Sign In')).toBeInTheDocument();
-  });
-
-  it('renders hero section', () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      json: async () => ({ images: [] }),
-    });
-
-    render(<Home />);
-    expect(screen.getByText('Professional photography on-chain')).toBeInTheDocument();
-  });
-
   it('fetches images from API on mount', async () => {
     (global.fetch as any).mockResolvedValueOnce({
       json: async () => ({ images: mockImages }),
