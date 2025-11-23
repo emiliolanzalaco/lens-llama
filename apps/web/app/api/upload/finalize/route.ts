@@ -80,10 +80,15 @@ export async function POST(request: NextRequest) {
     const data = result.data;
     blobUrl = data.blobUrl;
 
-    console.log('[Finalize] Fetching image from blob storage...');
+    console.log('[Finalize] Fetching image from blob storage:', data.blobUrl);
     const blobResponse = await fetch(data.blobUrl);
     if (!blobResponse.ok) {
-      throw new ValidationError('Failed to fetch image from blob storage');
+      console.error('[Finalize] Blob fetch failed:', {
+        status: blobResponse.status,
+        statusText: blobResponse.statusText,
+        url: data.blobUrl,
+      });
+      throw new ValidationError(`Failed to fetch image from blob storage: ${blobResponse.status} ${blobResponse.statusText}`);
     }
 
     const imageBuffer = Buffer.from(await blobResponse.arrayBuffer());
