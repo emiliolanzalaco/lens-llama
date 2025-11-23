@@ -26,10 +26,15 @@ const getGridClasses = (size: ImagePin['size']): string => {
 
 const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Use server-side API route to download from Filecoin with Synapse SDK
   const imageUrl = `/api/filecoin-image?cid=${image.watermarkedCid}`;
+
+  // Don't render the card if image failed to load
+  if (imageError) {
+    return null;
+  }
 
   return (
     <Link
@@ -48,6 +53,10 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
             } group-hover:scale-110`}
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
           onLoad={() => setImageLoaded(true)}
+          onError={() => {
+            console.error('Failed to load image:', image.watermarkedCid);
+            setImageError(true);
+          }}
           loading="lazy"
           unoptimized
         />
