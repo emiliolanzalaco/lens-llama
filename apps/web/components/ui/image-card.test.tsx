@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { ImageCard } from '../image-card';
+import ImageCard from './image-card';
 
 describe('ImageCard', () => {
   const mockProps = {
