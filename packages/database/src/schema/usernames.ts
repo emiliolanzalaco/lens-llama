@@ -6,8 +6,7 @@ export const usernames = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     userAddress: varchar('user_address', { length: 42 }).notNull().unique(),
-    username: varchar('username', { length: 63 }).notNull().unique(), // DNS label limit
-    ensName: varchar('ens_name', { length: 255 }).notNull().unique(), // e.g., "alice.ens.eth"
+    username: varchar('username', { length: 63 }).notNull().unique(),
     claimedAt: timestamp('claimed_at').notNull().defaultNow(),
     firstImageId: uuid('first_image_id').references(() => images.id),
   },

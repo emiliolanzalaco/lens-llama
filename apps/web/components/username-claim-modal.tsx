@@ -9,7 +9,7 @@ interface UsernameClaimModalProps {
   onClose: () => void;
   userAddress: string;
   imageId?: string;
-  onSuccess?: (username: string, ensName: string) => void;
+  onSuccess?: (username: string) => void;
 }
 
 export function UsernameClaimModal({
@@ -83,7 +83,7 @@ export function UsernameClaimModal({
         throw new Error(data.error || 'Failed to claim username');
       }
 
-      onSuccess?.(data.username, data.ensName);
+      onSuccess?.(data.username);
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to claim username');
@@ -158,9 +158,9 @@ export function UsernameClaimModal({
           </div>
           {username && (
             <p className="mt-1 text-sm text-gray-500">
-              Your name will be:{' '}
+              Your username will be:{' '}
               <span className="font-mono bg-gray-100 px-1 rounded">
-                {username}.lensllama.eth
+                {username}
               </span>
             </p>
           )}

@@ -38,7 +38,6 @@ export async function POST(request: NextRequest) {
       {
         hasUsername: existingUsername.length > 0,
         username: existingUsername[0]?.username || null,
-        ensName: existingUsername[0]?.ensName || null,
       },
       { status: 200 }
     );

@@ -180,7 +180,7 @@ export function UploadForm() {
     }
   };
 
-  const handleUsernameSuccess = async (username: string, ensName: string) => {
+  const handleUsernameSuccess = async (username: string) => {
     setShowUsernameModal(false);
     setPendingUpload(false);
 

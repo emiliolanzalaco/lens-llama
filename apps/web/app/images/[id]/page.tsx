@@ -187,7 +187,7 @@ export default function ImageDetailPage() {
 
             {image.photographerUsername && (
               <p className="mt-4 text-neutral-600">
-                {image.photographerUsername}.lensllama.eth
+                by {image.photographerUsername}
               </p>
             )}
 

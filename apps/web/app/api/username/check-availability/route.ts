@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createNameStoneService, validateUsername } from '@lens-llama/shared';
+import { validateUsername } from '@lens-llama/shared';
 import { db, usernames } from '@lens-llama/database';
 import { eq } from 'drizzle-orm';
 
@@ -40,24 +40,10 @@ export async function GET(request: NextRequest) {
       .where(eq(usernames.username, username.toLowerCase()))
       .limit(1);
 
-    if (existingUsername.length > 0) {
-      return NextResponse.json(
-        {
-          available: false,
-          error: 'Username is already taken',
-        },
-        { status: 200 }
-      );
-    }
-
-    // Check availability with NameStone
-    const nameStoneService = createNameStoneService();
-    const available = await nameStoneService.checkAvailability(username);
-
     return NextResponse.json(
       {
-        available,
-        error: available ? undefined : 'Username is already taken',
+        available: existingUsername.length === 0,
+        error: existingUsername.length > 0 ? 'Username is already taken' : undefined,
       },
       { status: 200 }
     );

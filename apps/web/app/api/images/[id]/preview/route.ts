@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db, images } from '@lens-llama/database';
-import { downloadFromFilecoin } from '@lens-llama/storage';
 
 export async function GET(
   request: Request,
@@ -18,21 +17,6 @@ export async function GET(
     return NextResponse.json({ error: 'Image not found' }, { status: 404 });
   }
 
-  try {
-    // Download watermarked image from Filecoin
-    const imageData = await downloadFromFilecoin(image.watermarkedCid);
-
-    return new NextResponse(new Uint8Array(imageData), {
-      headers: {
-        'Content-Type': 'image/jpeg',
-        'Cache-Control': 'public, max-age=31536000, immutable',
-      },
-    });
-  } catch (error) {
-    console.error('Error fetching preview:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch preview' },
-      { status: 500 }
-    );
-  }
+  // Redirect to the watermarked blob URL
+  return NextResponse.redirect(image.watermarkedBlobUrl);
 }

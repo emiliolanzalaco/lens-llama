@@ -22,7 +22,7 @@ export async function GET() {
       images: allImages.map((img) => ({
         id: img.id,
         title: img.title,
-        watermarkedCid: img.watermarkedCid,
+        watermarkedBlobUrl: img.watermarkedBlobUrl,
         createdAt: img.createdAt,
       })),
     });

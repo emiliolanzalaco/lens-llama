@@ -1,1 +1,1 @@
-export * from './src/services/namestone';
+export * from './src/validation';

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createNameStoneService, validateUsername } from '@lens-llama/shared';
+import { validateUsername } from '@lens-llama/shared';
 import { db, usernames, images } from '@lens-llama/database';
 import { eq } from 'drizzle-orm';
 
@@ -12,7 +12,7 @@ interface ClaimUsernameRequest {
 }
 
 /**
- * Claim a username and register ENS subdomain
+ * Claim a username
  * POST /api/username/claim
  */
 export async function POST(request: NextRequest) {
@@ -53,7 +53,6 @@ export async function POST(request: NextRequest) {
         {
           error: 'User already has a username',
           existingUsername: existingUserUsername[0].username,
-          ensName: existingUserUsername[0].ensName,
         },
         { status: 409 }
       );
@@ -73,69 +72,32 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    try {
-      const nameStoneService = createNameStoneService();
+    // Store username in database
+    const [newUsername] = await db
+      .insert(usernames)
+      .values({
+        userAddress: userAddress.toLowerCase(),
+        username: username.toLowerCase(),
+        firstImageId: firstImageId || null,
+      })
+      .returning();
 
-      const claimResult = await nameStoneService.claimSubdomain(
-        username.toLowerCase(),
-        userAddress.toLowerCase(),
-        {
-          // Add real social handles if available, otherwise omit or set to null/undefined
-          // 'com.twitter': twitterHandle || undefined,
-          // 'com.github': githubHandle || undefined,
-          // Add real avatar URL if available, otherwise omit or set to null/undefined
-          // avatar: avatarUrl || undefined,
-          'eth.base.sepolia': userAddress.toLowerCase(),
-        }
-      );
-
-      if (!claimResult.success) {
-        return NextResponse.json(
-          { error: claimResult.error || 'Failed to register username' },
-          { status: 500 }
-        );
-      }
-
-      // Store username in database
-      const [newUsername] = await db
-        .insert(usernames)
-        .values({
-          userAddress: userAddress.toLowerCase(),
-          username: username.toLowerCase(),
-          ensName: claimResult.name!,
-          firstImageId: firstImageId || null,
-        })
-        .returning();
-
-      // Update all images from this photographer to include the username
-      if (newUsername) {
-        await db
-          .update(images)
-          .set({ photographerUsername: username.toLowerCase() })
-          .where(eq(images.photographerAddress, userAddress.toLowerCase()));
-      }
-
-      return NextResponse.json(
-        {
-          success: true,
-          username: newUsername.username,
-          ensName: newUsername.ensName,
-          claimedAt: newUsername.claimedAt,
-        },
-        { status: 201 }
-      );
-    } catch (namestoneError) {
-      console.error('NameStone registration error:', namestoneError);
-      return NextResponse.json(
-        {
-          error:
-            namestoneError instanceof Error
-              ? namestoneError.message
-              : 'Failed to register with NameStone',
-        },
-        { status: 500 }
-      );
+    // Update all images from this photographer to include the username
+    if (newUsername) {
+      await db
+        .update(images)
+        .set({ photographerUsername: username.toLowerCase() })
+        .where(eq(images.photographerAddress, userAddress.toLowerCase()));
     }
+
+    return NextResponse.json(
+      {
+        success: true,
+        username: newUsername.username,
+        claimedAt: newUsername.claimedAt,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Error claiming username:', error);
     return NextResponse.json(
