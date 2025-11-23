@@ -256,19 +256,22 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 
 **Branch:** `feature/smart-contract` | **Assigned:** _unclaimed_
 
-### 4.2 x402 Facilitator
-- [ ] Fork @standard/x402-facilitator repository
-- [ ] Study existing /verify and /settle endpoints
-- [ ] Implement ERC-6492 signature parsing (see TECHNICAL_SPEC for problem description)
-- [ ] Update /verify to handle undeployed smart wallet signatures
-- [ ] Write unit tests for signature parsing
-- [ ] Test with EOA signatures
-- [ ] Test with Coinbase Smart Wallet signatures
-- [ ] Deploy facilitator service (Vercel/Railway)
+### 4.2 x402 Integration
+- [ ] Install x402: `pnpm add x402`
+- [ ] Fork coinbase/x402 repository
+- [ ] Implement ERC-6492 fix in `typescript/packages/x402/src/schemes/exact/evm/facilitator.ts`
+- [ ] Add ERC-6492 parsing before `verifyTypedData()` call
+- [ ] Write unit tests for ERC-6492 signature handling
+- [ ] Submit PR to coinbase/x402 referencing issue #623
+- [ ] Use forked x402 in LensLlama until PR merged
+- [ ] Set up facilitator service
+- [ ] Configure for single payment to photographer
+- [ ] Test payment flow with EOA signatures
+- [ ] Test payment flow with Privy embedded wallet
 - [ ] Fund facilitator wallet with ETH for gas
-- [ ] Set up logging and monitoring
+- [ ] Deploy facilitator service (Vercel/Railway)
 
-**Branch:** `feature/x402-facilitator` | **Assigned:** _unclaimed_
+**Branch:** `feature/x402-integration` | **Assigned:** _unclaimed_
 
 ### 4.3 Payment Flow Integration
 - [ ] Create EIP-712 typed data message builder for x402
@@ -368,6 +371,16 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 - [ ] Write tests for queue operations
 
 **Branch:** `stretch/upload-queue` | **Assigned:** _unclaimed_
+
+### S5. Revenue Split (Platform Fee)
+- [ ] Update payment flow to use two transferWithAuthorization calls
+- [ ] User signs two authorizations: 10% to treasury, 90% to photographer
+- [ ] Facilitator executes both transfers sequentially
+- [ ] Or use RevenueDistributor contract (Phase 4.1) as intermediary
+- [ ] Update environment variables for treasury address
+- [ ] Write tests for split calculations
+
+**Branch:** `stretch/revenue-split` | **Assigned:** _unclaimed_
 
 ---
 
