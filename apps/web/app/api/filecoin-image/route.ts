@@ -26,8 +26,17 @@ export async function GET(request: Request) {
 
     // Auto-detect content type from file signature
     let contentType = 'image/jpeg';
-    if (imageData.length > 2) {
-      if (imageData[0] === 0x89 && imageData[1] === 0x50 && imageData[2] === 0x4e) {
+    if (imageData.length > 7) {
+      if (
+        imageData[0] === 0x89 &&
+        imageData[1] === 0x50 &&
+        imageData[2] === 0x4e &&
+        imageData[3] === 0x47 &&
+        imageData[4] === 0x0d &&
+        imageData[5] === 0x0a &&
+        imageData[6] === 0x1a &&
+        imageData[7] === 0x0a
+      ) {
         contentType = 'image/png';
       } else if (imageData[0] === 0x47 && imageData[1] === 0x49 && imageData[2] === 0x46) {
         contentType = 'image/gif';
