@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { db } from '@lens-llama/database';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 class ValidationError extends Error {
   constructor(message: string) {
     super(message);
@@ -74,7 +76,7 @@ export async function GET(request: Request) {
         title: true,
         priceUsdc: true,
         photographerAddress: true,
-        // Explicitly exclude other fields
+        // Explicitly exclude sensitive fields
         encryptedCid: false,
         encryptionKey: false,
         description: false,

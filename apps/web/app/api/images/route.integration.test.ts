@@ -88,23 +88,29 @@ describe('GET /api/images integration', () => {
   });
 
   it('orders images by created_at DESC', async () => {
-    const request = createRequest();
+    // Fetch enough images to include our test images
+    const request = createRequest({ limit: '50' });
     const response = await GET(request);
     const data = await response.json();
 
     expect(response.status).toBe(200);
 
-    // Get our test images (they should be the most recent)
+    // Get our test images from the response
     const testImages = data.images
-      .filter((img: any) => testImageIds.includes(img.id))
-      .slice(0, 3);
+      .filter((img: any) => testImageIds.includes(img.id));
 
-    expect(testImages).toHaveLength(3);
+    expect(testImages.length).toBe(3);
 
-    // Verify they appear in reverse order of insertion
-    expect(testImages[0].title).toBe('Test Image 3');
-    expect(testImages[1].title).toBe('Test Image 2');
-    expect(testImages[2].title).toBe('Test Image 1');
+    // Verify they appear in reverse order of insertion (most recent first)
+    // Find indices of our test images within the result
+    const allIds = data.images.map((img: any) => img.id);
+    const image1Index = allIds.indexOf(testImageIds[0]);
+    const image2Index = allIds.indexOf(testImageIds[1]);
+    const image3Index = allIds.indexOf(testImageIds[2]);
+
+    // Image 3 (index 2) was inserted last, should appear first (lower index)
+    expect(image3Index).toBeLessThan(image2Index);
+    expect(image2Index).toBeLessThan(image1Index);
   });
 
   it('returns only safe fields and excludes sensitive data', async () => {
@@ -301,13 +307,16 @@ describe('GET /api/images integration', () => {
     const page1Response = await GET(page1Request);
     const page1Data = await page1Response.json();
 
-    if (data.images.length > 0 && page1Data.images.length > 0) {
-      const page2Ids = data.images.map((img: any) => img.id);
-      const page1Ids = page1Data.images.map((img: any) => img.id);
+    // Verify that pages have different images (no overlap)
+    const page2Ids = data.images.map((img: any) => img.id);
+    const page1Ids = page1Data.images.map((img: any) => img.id);
 
-      // Should have no overlap
-      const overlap = page2Ids.filter((id: string) => page1Ids.includes(id));
-      expect(overlap).toHaveLength(0);
-    }
+    // Should have exactly 5 images per page
+    expect(page1Data.images.length).toBe(5);
+    expect(data.images.length).toBe(5);
+
+    // Should have no overlap between pages
+    const overlap = page2Ids.filter((id: string) => page1Ids.includes(id));
+    expect(overlap).toHaveLength(0);
   });
 });
