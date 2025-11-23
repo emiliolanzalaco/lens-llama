@@ -27,7 +27,7 @@ describe('ImageCard', () => {
   it('links to correct detail page', () => {
     render(<ImageCard image={mockImage} onClick={mockOnClick} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveAttribute('href', '/image/550e8400-e29b-41d4-a716-446655440001');
+    expect(link).toHaveAttribute('href', '/images/550e8400-e29b-41d4-a716-446655440001');
   });
 
   it('applies small grid classes', () => {
