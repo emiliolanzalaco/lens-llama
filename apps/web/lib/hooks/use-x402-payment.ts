@@ -4,19 +4,14 @@ import { useCallback } from 'react';
 import { useWallets } from '@privy-io/react-auth';
 import { createWalletClient, custom, type Address, type Hex } from 'viem';
 import { baseSepolia } from 'viem/chains';
-
-// Base Sepolia USDC address
-const USDC_ADDRESS = '0x036CbD53842c5426634e7929541eC2318f3dCF7e' as Address;
-
-// x402 payment header name
-const X402_PAYMENT_HEADER = 'X-Payment';
+import { USDC_ADDRESS, X402_PAYMENT_HEADER } from '@/lib/x402';
 
 // EIP-712 domain for USDC (must match x402 facilitator config)
 const USDC_DOMAIN = {
   name: 'USDC',
   version: '2',
   chainId: baseSepolia.id,
-  verifyingContract: USDC_ADDRESS,
+  verifyingContract: USDC_ADDRESS as Address,
 };
 
 // TransferWithAuthorization types
