@@ -69,7 +69,7 @@ export function FileDropzone({
           <div className="text-neutral-600">
             <p className="mb-2">Drag and drop or click to upload</p>
             <p className="text-sm text-neutral-400">
-              JPEG, PNG, WebP up to 50MB
+              JPEG, PNG, WebP up to 4MB
             </p>
           </div>
         )}

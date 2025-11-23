@@ -12,7 +12,7 @@ import { uploadToFilecoin } from '@lens-llama/storage';
 import { z } from 'zod';
 import { eq } from 'drizzle-orm';
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 class ValidationError extends Error {

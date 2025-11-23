@@ -8,7 +8,7 @@ describe('FileDropzone', () => {
     render(<FileDropzone onFileSelect={onFileSelect} />);
 
     expect(screen.getByText('Drag and drop or click to upload')).toBeInTheDocument();
-    expect(screen.getByText('JPEG, PNG, WebP up to 50MB')).toBeInTheDocument();
+    expect(screen.getByText('JPEG, PNG, WebP up to 4MB')).toBeInTheDocument();
   });
 
   it('displays preview when provided', () => {

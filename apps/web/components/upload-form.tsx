@@ -10,7 +10,7 @@ import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { UsernameClaimModal } from '@/components/username-claim-modal';
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const MAX_FILE_SIZE = 4 * 1024 * 1024; // 4MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const uploadSchema = z.object({
