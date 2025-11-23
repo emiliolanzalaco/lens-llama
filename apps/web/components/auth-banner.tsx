@@ -11,7 +11,7 @@ export function AuthBanner() {
 
     // Format balance to 2 decimal places
     const formattedBalance = balance
-        ? parseFloat(balance).toFixed(2)
+        ? Number(balance).toFixed(2)
         : '0.00';
 
     if (authenticated) {

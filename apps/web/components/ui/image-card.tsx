@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
 import { Image as ImagePin } from '../types';
+import { LoadingSpinner } from './loading-spinner';
 
 interface ImageCardProps {
   image: ImagePin,
@@ -50,11 +51,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
       data-testid="image-card"
     >
       <div className="relative h-full w-full">
-        {!imageLoaded && (
-          <div className="absolute inset-0 flex items-center justify-center bg-[#FDF6E3]">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-          </div>
-        )}
+        {!imageLoaded && <LoadingSpinner size="sm" />}
         <Image
           src={imageUrl}
           alt={image.title}

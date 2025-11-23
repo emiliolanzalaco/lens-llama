@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createPublicClient, http, formatUnits } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { USDC_ADDRESS } from '@/lib/x402/constants';
@@ -23,6 +23,7 @@ const USDC_ABI = [
 export function useUsdcBalance(address: string | null) {
   const [balance, setBalance] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const isFetchingRef = useRef(false);
 
   useEffect(() => {
     if (!address) {
@@ -31,6 +32,8 @@ export function useUsdcBalance(address: string | null) {
     }
 
     const fetchBalance = async () => {
+      if (isFetchingRef.current) return;
+      isFetchingRef.current = true;
       setLoading(true);
       try {
         const rawBalance = await client.readContract({
@@ -48,6 +51,7 @@ export function useUsdcBalance(address: string | null) {
         setBalance(null);
       } finally {
         setLoading(false);
+        isFetchingRef.current = false;
       }
     };
 

@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useX402Payment } from '@/lib/hooks/use-x402-payment';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ImageMetadata {
   id: string;
@@ -163,11 +164,7 @@ export default function ImageDetailPage() {
         <div className="grid gap-12 md:grid-cols-2">
           {/* Image - left column */}
           <div className="relative">
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#FDF6E3]">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-black/20 border-t-black" />
-              </div>
-            )}
+            {!imageLoaded && <LoadingSpinner size="md" />}
             <img
               src={`/api/images/${imageId}/preview`}
               alt={image.title}
