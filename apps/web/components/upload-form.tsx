@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { FileDropzone } from '@/components/ui/file-dropzone';
 import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
-
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+import { GradientAIButton } from '@/components/ui/ai-button';
+import { generateDescription } from '@/app/actions/generate-description';
 
 const uploadSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -23,20 +21,32 @@ const uploadSchema = z.object({
 });
 
 type FormErrors = {
-  file?: string;
   title?: string;
   description?: string;
   tags?: string;
   price?: string;
 };
 
-export function UploadForm() {
+export interface UploadFormData {
+  title: string;
+  description: string;
+  tags: string;
+  price: string;
+}
+
+interface UploadFormProps {
+  file: File;
+  data: UploadFormData;
+  onChange: (data: UploadFormData) => void;
+  onUploadSuccess: () => void;
+}
+
+export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadFormProps) {
   const router = useRouter();
   const { walletAddress } = useAuth();
 
-  const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -79,8 +89,24 @@ export function UploadForm() {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    onChange({ ...data, [name]: value });
     setErrors((prev) => ({ ...prev, [name]: undefined }));
+  };
+
+  const handleGenerateDescription = async () => {
+    setIsGeneratingAI(true);
+    try {
+      // Create a temporary URL for the file to send to the server (or handle upload there)
+      // For the skeleton/mock, we just pass a string. In reality, we might need to upload to blob storage first
+      // or send the file content. For now, we'll simulate it.
+      const imageUrl = URL.createObjectURL(file);
+      const description = await generateDescription(imageUrl);
+      onChange({ ...data, description });
+    } catch (err) {
+      console.error('Failed to generate description:', err);
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -114,10 +140,10 @@ export function UploadForm() {
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', file);
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tags', formData.tags);
-      formDataToSend.append('price', formData.price);
+      formDataToSend.append('title', data.title);
+      formDataToSend.append('description', data.description);
+      formDataToSend.append('tags', data.tags);
+      formDataToSend.append('price', data.price);
       formDataToSend.append('photographerAddress', walletAddress);
 
       const progressInterval = setInterval(() => {
@@ -132,12 +158,15 @@ export function UploadForm() {
       clearInterval(progressInterval);
 
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
+        const responseData = await response.json();
+        throw new Error(responseData.error || 'Upload failed');
       }
 
       setUploadProgress(100);
-      setTimeout(() => router.push('/'), 500);
+      onUploadSuccess();
+
+      // Optional: Redirect if it was the last image, but parent handles flow now.
+      // setTimeout(() => router.push('/'), 500); 
     } catch (error) {
       setSubmitError(
         error instanceof Error ? error.message : 'Upload failed'
@@ -147,60 +176,73 @@ export function UploadForm() {
     }
   };
 
+  const handleUsernameSuccess = async (username: string, ensName: string) => {
+    setShowUsernameModal(false);
+    setPendingUpload(false);
+
+    // Now perform the upload
+    await performUpload();
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <FileDropzone
-        onFileSelect={handleFileSelect}
-        preview={preview}
-        error={errors.file}
-      />
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <FormField
+          label="Title"
+          name="title"
+          value={data.title}
+          onChange={handleInputChange}
+          error={errors.title}
+          placeholder="Enter image title"
+        />
 
-      <FormField
-        label="Title"
-        name="title"
-        value={formData.title}
-        onChange={handleInputChange}
-        error={errors.title}
-        placeholder="Enter image title"
-      />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium text-neutral-950">
+              Description
+            </label>
+            <GradientAIButton
+              onClick={handleGenerateDescription}
+              isLoading={isGeneratingAI}
+              size="sm"
+            />
+          </div>
+          <textarea
+            name="description"
+            value={data.description}
+            onChange={handleInputChange}
+            placeholder="Describe your image"
+            className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm placeholder:text-neutral-500 focus:border-neutral-950 focus:outline-none focus:ring-1 focus:ring-neutral-950 min-h-[100px]"
+          />
+        </div>
 
-      <FormField
-        label="Description"
-        name="description"
-        value={formData.description}
-        onChange={handleInputChange}
-        placeholder="Describe your image"
-        optional
-        multiline
-      />
+        <FormField
+          label="Tags"
+          name="tags"
+          value={formData.tags}
+          onChange={handleInputChange}
+          placeholder="nature, landscape, sunset"
+          optional
+        />
 
-      <FormField
-        label="Tags"
-        name="tags"
-        value={formData.tags}
-        onChange={handleInputChange}
-        placeholder="nature, landscape, sunset"
-        optional
-      />
+        <FormField
+          label="Price (USDC)"
+          name="price"
+          value={formData.price}
+          onChange={handleInputChange}
+          error={errors.price}
+          placeholder="9.99"
+        />
 
-      <FormField
-        label="Price (USDC)"
-        name="price"
-        value={formData.price}
-        onChange={handleInputChange}
-        error={errors.price}
-        placeholder="9.99"
-      />
+        {isUploading && <ProgressBar progress={uploadProgress} />}
 
-      {isUploading && <ProgressBar progress={uploadProgress} />}
+        {submitError && (
+          <p className="text-sm text-red-600">{submitError}</p>
+        )}
 
-      {submitError && (
-        <p className="text-sm text-red-600">{submitError}</p>
-      )}
-
-      <Button type="submit" disabled={isUploading} className="w-full">
-        {isUploading ? 'Uploading...' : 'Upload Image'}
-      </Button>
-    </form>
-  );
+        <Button type="submit" disabled={isUploading} className="w-full">
+          {isUploading ? 'Uploading...' : 'Upload Image'}
+        </Button>
+      </form>
+      );
 }
