@@ -127,13 +127,15 @@ describe('POST /api/upload/finalize', () => {
     mockFetch.mockResolvedValue({
       ok: false,
       status: 404,
+      statusText: 'Not Found',
     });
 
     const response = await POST(createRequest(createValidBody()));
     const data = await response.json();
 
     expect(response.status).toBe(400);
-    expect(data.error).toBe('Failed to fetch image from blob storage');
+    expect(data.error).toContain('Failed to fetch image from blob storage');
+    expect(data.error).toContain('404');
   });
 
   it('successfully finalizes upload and returns CIDs', async () => {
