@@ -127,7 +127,7 @@ function return402Response(image: typeof images.$inferSelect, baseUrl: string) {
 async function returnDecryptedImage(image: typeof images.$inferSelect) {
   const masterKey = process.env.MASTER_ENCRYPTION_KEY;
   if (!masterKey) {
-    throw new Error('MASTER_ENCRYPTION_KEY not configured');
+    throw new Error('Server configuration error: MASTER_ENCRYPTION_KEY is not set');
   }
 
   const imageKeyHex = decryptWithMasterKey(image.encryptionKey, masterKey);

@@ -111,8 +111,13 @@ export function useX402Payment() {
           },
         };
 
-        // Base64 encode the payload
-        const encodedPayload = btoa(JSON.stringify(paymentPayload));
+        // Base64 encode the payload (using TextEncoder for Unicode support)
+        const payloadString = JSON.stringify(paymentPayload);
+        const encodedPayload = btoa(
+          Array.from(new TextEncoder().encode(payloadString), (byte) =>
+            String.fromCharCode(byte)
+          ).join('')
+        );
 
         // Make request with payment header
         const response = await fetch(`/api/images/${imageId}`, {
