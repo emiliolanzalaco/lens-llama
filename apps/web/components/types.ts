@@ -7,6 +7,7 @@ export interface Image {
     watermarkedCid: string;
     encryptedCid: string;
     photographerAddress: string;
+    photographerUsername?: string | null;
     priceUsdc: string;
     size: ImageSize;
 }

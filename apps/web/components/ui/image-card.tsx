@@ -73,7 +73,14 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
       </div>
       {/* Overlay */}
       <div className={`absolute inset-0 bg-black/30 transition-opacity duration-200 flex items-end justify-between p-3 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-        <p className="text-white text-xs font-bold truncate max-w-[60%]">{image.title}</p>
+        <div className="text-white max-w-[60%]">
+          <p className="text-xs font-bold truncate">{image.title}</p>
+          {image.photographerUsername && (
+            <p className="text-xs opacity-80 truncate">
+              by {image.photographerUsername}.lensllama.eth
+            </p>
+          )}
+        </div>
         <p className="text-white text-xs font-bold">${image.priceUsdc}</p>
       </div>
     </Link >

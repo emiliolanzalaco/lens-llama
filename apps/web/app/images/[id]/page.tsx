@@ -13,6 +13,7 @@ interface ImageMetadata {
   watermarkedCid: string;
   priceUsdc: string;
   photographerAddress: string;
+  photographerUsername: string;
   width: number;
   height: number;
   paymentRequirements: {
@@ -154,6 +155,8 @@ export default function ImageDetailPage() {
     );
   }
 
+
+  console.log(image);
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
@@ -182,6 +185,12 @@ export default function ImageDetailPage() {
             {image.description && (
               <p className="mt-4 text-neutral-600">
                 {image.description}
+              </p>
+            )}
+
+            {image.photographerUsername && (
+              <p className="mt-4 text-neutral-600">
+                {image.photographerUsername}.lensllama.eth
               </p>
             )}
 

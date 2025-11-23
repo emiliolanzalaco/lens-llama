@@ -8,6 +8,7 @@ export const images = pgTable(
     watermarkedCid: text('watermarked_cid').notNull(),
     encryptionKey: text('encryption_key').notNull(), // Encrypted with MASTER_ENCRYPTION_KEY
     photographerAddress: varchar('photographer_address', { length: 42 }).notNull(),
+    photographerUsername: varchar('photographer_username', { length: 255 }),
     title: varchar('title', { length: 255 }).notNull(),
     description: text('description'),
     tags: text('tags').array().notNull().default([]),
