@@ -81,14 +81,29 @@ export async function POST(request: NextRequest) {
     blobUrl = data.blobUrl;
 
     console.log('[Finalize] Fetching image from blob storage:', data.blobUrl);
-    const blobResponse = await fetch(data.blobUrl);
-    if (!blobResponse.ok) {
-      console.error('[Finalize] Blob fetch failed:', {
-        status: blobResponse.status,
-        statusText: blobResponse.statusText,
+
+    // Retry logic to handle race condition where blob isn't immediately available
+    let blobResponse: Response | null = null;
+    let lastError = '';
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      blobResponse = await fetch(data.blobUrl);
+      if (blobResponse.ok) {
+        break;
+      }
+      lastError = `${blobResponse.status} ${blobResponse.statusText}`;
+      console.log(`[Finalize] Blob fetch attempt ${attempt} failed: ${lastError}`);
+      if (attempt < 3) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt)); // 1s, 2s delays
+      }
+    }
+
+    if (!blobResponse || !blobResponse.ok) {
+      console.error('[Finalize] Blob fetch failed after retries:', {
+        status: blobResponse?.status,
+        statusText: blobResponse?.statusText,
         url: data.blobUrl,
       });
-      throw new ValidationError(`Failed to fetch image from blob storage: ${blobResponse.status} ${blobResponse.statusText}`);
+      throw new ValidationError(`Failed to fetch image from blob storage: ${lastError}`);
     }
 
     const imageBuffer = Buffer.from(await blobResponse.arrayBuffer());
