@@ -181,7 +181,6 @@ export function UploadForm() {
   };
 
   const handleUsernameSuccess = async (username: string, ensName: string) => {
-    console.log('Username claimed:', username, ensName);
     setShowUsernameModal(false);
     setPendingUpload(false);
 

@@ -80,9 +80,11 @@ export async function POST(request: NextRequest) {
         username.toLowerCase(),
         userAddress.toLowerCase(),
         {
-          'com.twitter': 'something',
-          'com.github': 'something',
-          avatar: 'something',
+          // Add real social handles if available, otherwise omit or set to null/undefined
+          // 'com.twitter': twitterHandle || undefined,
+          // 'com.github': githubHandle || undefined,
+          // Add real avatar URL if available, otherwise omit or set to null/undefined
+          // avatar: avatarUrl || undefined,
           'eth.base.sepolia': userAddress.toLowerCase(),
         }
       );
