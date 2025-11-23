@@ -1,6 +1,6 @@
 import sharp from 'sharp';
+import { WATERMARK_PNG_BASE64 } from './watermark-image';
 
-const WATERMARK_TEXT = 'LensLlama';
 const WATERMARK_OPACITY = 0.3;
 
 export async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
@@ -11,25 +11,25 @@ export async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
   const width = metadata.width || 800;
   const height = metadata.height || 600;
 
-  // Calculate font size based on image dimensions
-  const fontSize = Math.max(Math.min(width, height) / 10, 24);
+  // Decode the pre-generated watermark PNG
+  const watermarkBuffer = Buffer.from(WATERMARK_PNG_BASE64, 'base64');
 
-  // Create a single watermark text using Sharp's native text API
-  const textImage = await sharp({
-    text: {
-      text: WATERMARK_TEXT,
-      font: 'sans-serif',
-      dpi: Math.round(fontSize * 3), // Scale DPI for size
-      rgba: true,
-    },
-  })
+  // Get watermark dimensions
+  const watermarkMeta = await sharp(watermarkBuffer).metadata();
+  const baseWidth = watermarkMeta.width || 200;
+  const baseHeight = watermarkMeta.height || 40;
+
+  // Scale watermark based on image size (target ~10% of image width)
+  const targetWidth = Math.max(Math.min(width, height) / 5, 100);
+  const scale = targetWidth / baseWidth;
+  const textWidth = Math.round(baseWidth * scale);
+  const textHeight = Math.round(baseHeight * scale);
+
+  // Resize watermark to target size
+  const resizedWatermark = await sharp(watermarkBuffer)
+    .resize(textWidth, textHeight)
     .png()
     .toBuffer();
-
-  // Get dimensions of the text image
-  const textMeta = await sharp(textImage).metadata();
-  const textWidth = textMeta.width || 100;
-  const textHeight = textMeta.height || 30;
 
   // Create a tiled pattern with rotation
   // Calculate pattern dimensions for diagonal tiling
@@ -47,7 +47,7 @@ export async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
   })
     .composite([
       {
-        input: textImage,
+        input: resizedWatermark,
         top: Math.round(patternHeight / 2 - textHeight / 2),
         left: Math.round(patternWidth / 2 - textWidth / 2),
       },
@@ -81,9 +81,7 @@ export async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
       width,
       height,
     })
-    // Apply opacity
     .ensureAlpha()
-    .modulate({ lightness: 1 })
     .toBuffer();
 
   // Apply opacity to the overlay
