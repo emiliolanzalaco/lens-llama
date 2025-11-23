@@ -24,15 +24,6 @@ importers:
         specifier: ^1.12.4
         version: 1.13.4
 
-  apps/facilitator:
-    devDependencies:
-      '@lens-llama/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   apps/web:
     dependencies:
       '@lens-llama/database':
@@ -83,6 +74,9 @@ importers:
       viem:
         specifier: ^2.39.3
         version: 2.39.3(typescript@5.9.3)(zod@3.25.76)
+      x402:
+        specifier: link:/Users/emiliolanzalaco/Documents/Code/x402/typescript/packages/x402
+        version: link:../../../x402/typescript/packages/x402
       zod:
         specifier: ^3.25.76
         version: 3.25.76
