@@ -4,8 +4,8 @@ export interface Image {
     id: string;
     title: string;
     description: string;
-    watermarkedCid: string;
-    encryptedCid: string;
+    watermarkedBlobUrl: string;
+    originalBlobUrl: string;
     photographerAddress: string;
     photographerUsername?: string | null;
     priceUsdc: string;

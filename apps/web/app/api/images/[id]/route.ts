@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { eq, and } from 'drizzle-orm';
-import { db, images, licenses, decryptWithMasterKey } from '@lens-llama/database';
-import { decryptImage, hexToKey } from '@lens-llama/image-processing';
-import { downloadFromFilecoin } from '@lens-llama/storage';
+import { db, images, licenses } from '@lens-llama/database';
 import {
   X402_PAYMENT_HEADER,
   buildPaymentRequirements,
@@ -37,7 +35,7 @@ export async function GET(
     });
 
     if (existingLicense) {
-      return returnDecryptedImage(image);
+      return returnOriginalImage(image);
     }
   }
 
@@ -90,7 +88,7 @@ export async function GET(
       paymentTxHash: settleResult.transaction,
     });
 
-    return returnDecryptedImage(image);
+    return returnOriginalImage(image);
   } catch (error) {
     console.error('Payment processing error:', error);
     return NextResponse.json(
@@ -111,7 +109,7 @@ function return402Response(image: typeof images.$inferSelect, baseUrl: string) {
       photographerAddress: image.photographerAddress,
       photographerUsername: image.photographerUsername,
       priceUsdc: image.priceUsdc,
-      watermarkedCid: image.watermarkedCid,
+      watermarkedBlobUrl: image.watermarkedBlobUrl,
       width: image.width,
       height: image.height,
       paymentRequirements,
@@ -125,22 +123,7 @@ function return402Response(image: typeof images.$inferSelect, baseUrl: string) {
   );
 }
 
-async function returnDecryptedImage(image: typeof images.$inferSelect) {
-  const masterKey = process.env.MASTER_ENCRYPTION_KEY;
-  if (!masterKey) {
-    throw new Error('Server configuration error: MASTER_ENCRYPTION_KEY is not set');
-  }
-
-  const imageKeyHex = decryptWithMasterKey(image.encryptionKey, masterKey);
-  const imageKey = hexToKey(imageKeyHex);
-  const encryptedData = await downloadFromFilecoin(image.encryptedCid);
-  const decryptedImage = decryptImage(encryptedData, imageKey);
-
-  return new NextResponse(new Uint8Array(decryptedImage), {
-    headers: {
-      'Content-Type': 'image/jpeg',
-      'Content-Disposition': `attachment; filename="${image.title}.jpg"`,
-      'Content-Length': decryptedImage.length.toString(),
-    },
-  });
+async function returnOriginalImage(image: typeof images.$inferSelect) {
+  // Redirect to the original blob URL
+  return NextResponse.redirect(image.originalBlobUrl);
 }

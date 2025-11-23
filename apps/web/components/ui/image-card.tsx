@@ -30,7 +30,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
   const [imageError, setImageError] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const imageUrl = `/api/filecoin-image?cid=${image.watermarkedCid}`;
+  const imageUrl = image.watermarkedBlobUrl;
 
   // Show error state if image failed to load
   if (imageError) {
@@ -61,7 +61,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
           sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
           onLoad={() => setImageLoaded(true)}
           onError={() => {
-            console.error('Failed to load image:', image.watermarkedCid);
+            console.error('Failed to load image:', image.watermarkedBlobUrl);
             setImageError(true);
           }}
           loading="lazy"

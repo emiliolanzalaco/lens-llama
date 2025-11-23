@@ -4,9 +4,8 @@ export const images = pgTable(
   'images',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    encryptedCid: text('encrypted_cid').notNull(),
-    watermarkedCid: text('watermarked_cid').notNull(),
-    encryptionKey: text('encryption_key').notNull(), // Encrypted with MASTER_ENCRYPTION_KEY
+    originalBlobUrl: text('original_blob_url').notNull(),
+    watermarkedBlobUrl: text('watermarked_blob_url').notNull(),
     photographerAddress: varchar('photographer_address', { length: 42 }).notNull(),
     photographerUsername: varchar('photographer_username', { length: 255 }),
     title: varchar('title', { length: 255 }).notNull(),
