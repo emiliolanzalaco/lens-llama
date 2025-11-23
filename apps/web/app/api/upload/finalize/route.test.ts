@@ -69,10 +69,15 @@ describe('POST /api/upload/finalize', () => {
     vi.clearAllMocks();
     process.env.MASTER_ENCRYPTION_KEY = '0'.repeat(64);
 
-    // Mock successful blob fetch
+    // Mock successful blob fetch with valid PNG header
+    const pngHeader = new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]);
+    const mockImageBuffer = new ArrayBuffer(100);
+    new Uint8Array(mockImageBuffer).set(pngHeader);
+
     mockFetch.mockResolvedValue({
       ok: true,
-      arrayBuffer: () => Promise.resolve(new ArrayBuffer(100)),
+      arrayBuffer: () => Promise.resolve(mockImageBuffer),
+      headers: new Headers({ 'content-type': 'image/png' }),
     });
   });
 
