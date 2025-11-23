@@ -201,13 +201,12 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `feature/images-list-api` | **Assigned:** _unclaimed_
 
 ### 3.2 Homepage UI
-- [ ] Create homepage with hero section
-- [ ] Build responsive image grid (4 cols desktop, 2 cols mobile)
-- [ ] Create ImageCard component: thumbnail from IPFS, title, price
-- [ ] Fetch images from /api/images on load
-- [ ] Link each card to /image/[id]
-- [ ] Add loading skeleton state
-- [ ] Write component tests
+- [x] Build responsive image grid (4 cols desktop, 2 cols mobile)
+- [x] Create ImageCard component: thumbnail from IPFS, title, price
+- [x] Fetch images from /api/images on load
+- [x] Link each card to /image/[id]
+- [x] Add loading skeleton state
+- [x] Write component tests
 
 **Branch:** `feature/homepage` | **Assigned:** _unclaimed_
 
