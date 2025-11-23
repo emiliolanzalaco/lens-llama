@@ -109,6 +109,21 @@ export async function POST(request: NextRequest) {
     const imageBuffer = Buffer.from(await blobResponse.arrayBuffer());
     console.log('[Finalize] Image fetched, size:', imageBuffer.length);
 
+    // Validate that we actually got an image
+    const contentType = blobResponse.headers.get('content-type');
+    console.log('[Finalize] Content-Type:', contentType);
+
+    // Check if it's an image by looking at magic bytes
+    const isJpeg = imageBuffer[0] === 0xff && imageBuffer[1] === 0xd8;
+    const isPng = imageBuffer[0] === 0x89 && imageBuffer[1] === 0x50;
+    const isWebp = imageBuffer[8] === 0x57 && imageBuffer[9] === 0x45 && imageBuffer[10] === 0x42 && imageBuffer[11] === 0x50;
+
+    if (!isJpeg && !isPng && !isWebp) {
+      console.error('[Finalize] Invalid image format. First 20 bytes:', imageBuffer.slice(0, 20).toString('hex'));
+      console.error('[Finalize] As text:', imageBuffer.slice(0, 100).toString('utf-8'));
+      throw new ValidationError('Invalid image format received from blob storage');
+    }
+
     console.log('[Finalize] Processing image...');
     const { dimensions, watermarked, encrypted, encryptionKey } = await processImage(imageBuffer);
 
