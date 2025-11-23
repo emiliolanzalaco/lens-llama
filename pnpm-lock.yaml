@@ -33,15 +33,6 @@ importers:
         specifier: ^2.39.3
         version: 2.39.3(typescript@5.9.3)
 
-  apps/facilitator:
-    devDependencies:
-      '@lens-llama/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   apps/web:
     dependencies:
       '@lens-llama/database':
