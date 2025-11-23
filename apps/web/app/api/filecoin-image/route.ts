@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { synapse } from '@lens-llama/storage';
+import { downloadFromFilecoin } from '@lens-llama/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,8 +22,7 @@ export async function GET(request: Request) {
 
     console.log('Downloading image from Filecoin, CID:', cid);
 
-    // Download from Filecoin using Synapse SDK
-    const imageData = await synapse.storage.download(cid);
+    const imageData = await downloadFromFilecoin(cid);
 
     // Auto-detect content type from file signature
     let contentType = 'image/jpeg';
@@ -37,8 +36,10 @@ export async function GET(request: Request) {
       }
     }
 
+    const imageBuffer = new Uint8Array(imageData);
+
     // Return the image with aggressive caching headers
-    return new NextResponse(imageData, {
+    return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=31536000, immutable',

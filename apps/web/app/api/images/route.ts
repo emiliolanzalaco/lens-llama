@@ -76,14 +76,14 @@ export async function GET(request: Request) {
         title: true,
         priceUsdc: true,
         photographerAddress: true,
+        createdAt: true,
         // Explicitly exclude sensitive fields
         encryptedCid: false,
         encryptionKey: false,
         description: false,
         tags: false,
         width: false,
-        height: false,
-        createdAt: false,
+        height: false
       },
     });
 
