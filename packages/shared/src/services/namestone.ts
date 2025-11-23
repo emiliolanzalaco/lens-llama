@@ -164,8 +164,6 @@ export class NameStoneService {
     try {
       const ensName = `${username}.${this.config.parentDomain}`;
 
-      // For Sepolia network, we store Base Sepolia address in text records
-      // because Base Sepolia (84532) is not in the ENS address-encoder supported list
       const finalTextRecords = {
         ...textRecords,
         ...(this.config.network === 'sepolia' && {
@@ -179,13 +177,6 @@ export class NameStoneService {
         domain: this.config.parentDomain,
         text_records: finalTextRecords,
       };
-
-      // Only add coin_types for mainnet (Base mainnet coin type is supported)
-      if (this.config.network === 'mainnet') {
-        requestBody.coin_types = {
-          [COIN_TYPES.BASE]: address, // Base mainnet address
-        };
-      }
 
       await this.fetch<ClaimNameResponse>('set-name', {
         method: 'POST',
@@ -281,8 +272,7 @@ export class NameStoneService {
 export function createNameStoneService(): NameStoneService {
   const apiKey = process.env.NAMESTONE_API_KEY;
   const parentDomain = process.env.NAMESTONE_PARENT_DOMAIN || 'ens.eth';
-  const network =
-    (process.env.NAMESTONE_NETWORK as 'mainnet' | 'sepolia') || 'sepolia';
+  const network = 'sepolia';
 
   if (!apiKey) {
     throw new Error('NAMESTONE_API_KEY environment variable is required');
