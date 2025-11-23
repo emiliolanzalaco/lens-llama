@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
 import { db, images, licenses, decryptWithMasterKey } from '@lens-llama/database';
 import { eq, and } from 'drizzle-orm';
 import { decryptImage, hexToKey } from '@lens-llama/image-processing';
