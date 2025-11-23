@@ -7,6 +7,23 @@ interface ImageData {
   photographerAddress: string;
 }
 
+export interface PaymentPayload {
+  x402Version: number;
+  scheme: string;
+  network: string;
+  payload: {
+    signature: string;
+    authorization: {
+      from: string;
+      to: string;
+      value: string;
+      validAfter: string;
+      validBefore: string;
+      nonce: string;
+    };
+  };
+}
+
 export interface VerifyResult {
   isValid: boolean;
   invalidReason?: string;
@@ -19,7 +36,7 @@ export interface SettleResult {
 }
 
 export async function verifyPayment(
-  paymentPayload: any,
+  paymentPayload: PaymentPayload,
   image: ImageData,
   baseUrl: string
 ): Promise<VerifyResult> {
@@ -38,11 +55,16 @@ export async function verifyPayment(
     body: JSON.stringify({ paymentPayload, paymentRequirements }),
   });
 
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Facilitator verify failed: ${response.status} - ${errorText}`);
+  }
+
   return await response.json();
 }
 
 export async function settlePayment(
-  paymentPayload: any,
+  paymentPayload: PaymentPayload,
   image: ImageData,
   baseUrl: string
 ): Promise<SettleResult> {
@@ -63,6 +85,11 @@ export async function settlePayment(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ paymentPayload, paymentRequirements }),
   });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Facilitator settle failed: ${response.status} - ${errorText}`);
+  }
 
   return await response.json();
 }

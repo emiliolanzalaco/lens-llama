@@ -8,6 +8,7 @@ import {
   buildPaymentRequirements,
   verifyPayment,
   settlePayment,
+  type PaymentPayload,
 } from '@/lib/x402';
 
 export async function GET(
@@ -51,7 +52,18 @@ export async function GET(
   try {
     const paymentPayload = JSON.parse(
       Buffer.from(paymentHeader, 'base64').toString('utf-8')
-    );
+    ) as PaymentPayload;
+
+    // Validate payload structure
+    if (
+      !paymentPayload?.payload?.authorization?.from ||
+      !paymentPayload?.payload?.signature
+    ) {
+      return NextResponse.json(
+        { error: 'Malformed payment payload' },
+        { status: 400 }
+      );
+    }
 
     const verifyResult = await verifyPayment(paymentPayload, image, baseUrl);
     if (!verifyResult.isValid) {
