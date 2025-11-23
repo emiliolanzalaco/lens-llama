@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
+import { upload } from '@vercel/blob/client';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { FileDropzone } from '@/components/ui/file-dropzone';
@@ -93,21 +94,32 @@ export function UploadForm() {
     setUploadProgress(0);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tags', formData.tags);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('photographerAddress', walletAddress);
+      // Step 1: Upload directly to Vercel Blob (bypasses 4.5MB limit)
+      const blob = await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload/get-url',
+        onUploadProgress: (progress) => {
+          // First 50% is blob upload
+          setUploadProgress(Math.round(progress.percentage * 0.5));
+        },
+      });
 
+      // Step 2: Call finalize endpoint to process and upload to Filecoin
       const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
+        setUploadProgress((prev) => Math.min(prev + 5, 95));
+      }, 500);
 
-      const response = await fetch('/api/upload', {
+      const response = await fetch('/api/upload/finalize', {
         method: 'POST',
-        body: formDataToSend,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blobUrl: blob.url,
+          title: formData.title,
+          description: formData.description,
+          tags: formData.tags,
+          price: formData.price,
+          photographerAddress: walletAddress,
+        }),
       });
 
       clearInterval(progressInterval);

@@ -16,6 +16,12 @@ vi.mock('@/lib/hooks/use-auth', () => ({
   }),
 }));
 
+// Mock @vercel/blob/client
+const mockUpload = vi.fn();
+vi.mock('@vercel/blob/client', () => ({
+  upload: (...args: unknown[]) => mockUpload(...args),
+}));
+
 // Mock fetch
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
@@ -28,6 +34,9 @@ const getFileInput = (container: HTMLElement) => {
 describe('UploadForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Mock successful blob upload
+    mockUpload.mockResolvedValue({ url: 'https://blob.vercel-storage.com/test.jpg' });
+    // Mock successful fetch responses
     mockFetch.mockResolvedValue({
       ok: true,
       json: async () => ({ id: 'test-id' }),
@@ -152,11 +161,15 @@ describe('UploadForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
 
     await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/upload', expect.any(Object));
+      // Check blob upload was called
+      expect(mockUpload).toHaveBeenCalled();
+      // Check finalize endpoint was called
+      expect(mockFetch).toHaveBeenCalledWith('/api/upload/finalize', expect.any(Object));
     });
   });
 
   it('shows error message when upload fails', async () => {
+    // Mock username check success, then finalize failure
     mockFetch
       .mockResolvedValueOnce({
         ok: true,
@@ -187,6 +200,39 @@ describe('UploadForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows error message when blob upload fails', async () => {
+    // Mock blob upload failure
+    mockUpload.mockRejectedValueOnce(new Error('Blob upload failed'));
+
+    // Mock username check success
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ hasUsername: true }),
+    });
+
+    const { container } = render(<UploadForm />);
+
+    // Create and select a file
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const input = getFileInput(container);
+    fireEvent.change(input, { target: { files: [file] } });
+
+    // Fill form
+    fireEvent.change(screen.getByLabelText(/^title$/i), {
+      target: { value: 'Test Image' },
+    });
+    fireEvent.change(screen.getByLabelText(/price/i), {
+      target: { value: '9.99' },
+    });
+
+    // Submit form
+    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/blob upload failed/i)).toBeInTheDocument();
     });
   });
 });
