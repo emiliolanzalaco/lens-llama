@@ -1,11 +1,11 @@
 
 import React from 'react';
 import ImageCard from './ui/image-card';
-import { Image } from './types';
+import { ImageWithSize } from './types';
 
 interface ImageGridProps {
-    images: Image[];
-    onImageClick: (image: Image) => void;
+    images: ImageWithSize[];
+    onImageClick: (image: ImageWithSize) => void;
 }
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick }) => {

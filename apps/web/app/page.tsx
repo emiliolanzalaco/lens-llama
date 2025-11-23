@@ -2,20 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import ImageGrid from '@/components/image-grid';
-
-type ImageSize = 'tall' | 'wide' | 'large' | 'small';
-
-interface ImageData {
-  id: string;
-  watermarkedCid: string;
-  title: string;
-  priceUsdc: string;
-  photographerAddress: string;
-}
-
-interface ImageWithSize extends ImageData {
-  size: ImageSize;
-}
+import { ImageWithSize, ImageSize } from '@/components/types';
 
 export default function Home() {
   const [images, setImages] = useState<ImageWithSize[]>([]);

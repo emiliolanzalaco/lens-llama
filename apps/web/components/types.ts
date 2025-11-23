@@ -10,3 +10,7 @@ export interface Image {
     priceUsdc: string;
     size: ImageSize;
 }
+
+export interface ImageWithSize extends Image {
+    size: ImageSize;
+}
