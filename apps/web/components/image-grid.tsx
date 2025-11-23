@@ -10,7 +10,7 @@ interface ImageGridProps {
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick }) => {
     return (
-        <div className="w-full px-2 md:px-4 mx-auto pb-20">
+        <div className="w-full">
             {/* 
         CSS Grid with Dense packing to fill holes. 
         auto-rows defines the base height unit.

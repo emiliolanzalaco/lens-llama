@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { useX402Payment } from '@/lib/hooks/use-x402-payment';
+import { LoadingSpinner } from '@/components/ui/loading-spinner';
 
 interface ImageMetadata {
   id: string;
@@ -34,6 +35,7 @@ export default function ImageDetailPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchased, setPurchased] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { authenticated, login } = useAuth();
   const { purchaseImage, hasWallet } = useX402Payment();
@@ -161,11 +163,13 @@ export default function ImageDetailPage() {
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
         <div className="grid gap-12 md:grid-cols-2">
           {/* Image - left column */}
-          <div>
+          <div className="relative">
+            {!imageLoaded && <LoadingSpinner size="md" />}
             <img
               src={`/api/images/${imageId}/preview`}
               alt={image.title}
-              className="w-full"
+              className={`w-full transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
             />
           </div>
 

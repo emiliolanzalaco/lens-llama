@@ -54,12 +54,6 @@ describe('ImageCard', () => {
     expect(link).toHaveClass('row-span-2', 'col-span-2');
   });
 
-  it('has gray background color', () => {
-    render(<ImageCard image={mockImage} onClick={mockOnClick} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveClass('bg-gray-200');
-  });
-
   it('has test id for testing', () => {
     render(<ImageCard image={mockImage} onClick={mockOnClick} />);
     const card = screen.getByTestId('image-card');

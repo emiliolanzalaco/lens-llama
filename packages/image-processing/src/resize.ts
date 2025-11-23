@@ -4,7 +4,8 @@ const MAX_WIDTH = 1200;
 const SCALE_FACTOR = 0.5;
 
 export async function resizeForPreview(imageBuffer: Buffer): Promise<Buffer> {
-  const image = sharp(imageBuffer);
+  // .rotate() without args auto-rotates based on EXIF orientation
+  const image = sharp(imageBuffer).rotate();
   const metadata = await image.metadata();
 
   if (!metadata.width || !metadata.height) {
