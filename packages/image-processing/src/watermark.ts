@@ -4,7 +4,8 @@ const WATERMARK_TEXT = 'LensLlama';
 const WATERMARK_OPACITY = 0.3;
 
 export async function addWatermark(imageBuffer: Buffer): Promise<Buffer> {
-  const image = sharp(imageBuffer);
+  // .rotate() without args auto-rotates based on EXIF orientation
+  const image = sharp(imageBuffer).rotate();
   const metadata = await image.metadata();
 
   const width = metadata.width || 800;

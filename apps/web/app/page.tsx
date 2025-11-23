@@ -15,7 +15,8 @@ export default function Home() {
         const data = await response.json();
 
         // Assign bento sizes in a repeating pattern
-        const sizes: ImageSize[] = ['large', 'small', 'tall', 'wide', 'small', 'small'];
+        // Pattern uses large (2x2) instead of wide (2x1) to reduce cropping
+        const sizes: ImageSize[] = ['large', 'small', 'small', 'small', 'tall', 'small'];
         const imagesWithSizes = data.images.map((img: ImageData, index: number) => ({
           ...img,
           size: sizes[index % sizes.length],

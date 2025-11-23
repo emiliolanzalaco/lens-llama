@@ -1,60 +1,65 @@
 'use client';
 
-import { useState } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/lib/hooks/use-auth';
+import { useUsdcBalance } from '@/lib/hooks/use-usdc-balance';
 import { Button } from '@/components/ui/button';
 
 export function AuthBanner() {
-    const { authenticated, login, logout, user, walletAddress } = useAuth();
-    const [copied, setCopied] = useState(false);
+    const { authenticated, login, logout, walletAddress } = useAuth();
+    const { balance } = useUsdcBalance(walletAddress);
 
-    const copyAddress = async () => {
-        if (walletAddress) {
-            await navigator.clipboard.writeText(walletAddress);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
-        }
-    };
+    // Format balance to 2 decimal places
+    const formattedBalance = balance
+        ? parseFloat(balance).toFixed(2)
+        : '0.00';
 
     if (authenticated) {
         return (
-            <div className="border-b bg-muted/50">
-                <div className="container flex h-14 items-center justify-between px-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">
-                            Logged in as{' '}
-                            {walletAddress ? (
-                                <button
-                                    onClick={copyAddress}
-                                    className="font-medium text-foreground hover:underline cursor-pointer"
-                                    title="Click to copy address"
-                                >
-                                    {copied ? 'copied!' : `${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`}
-                                </button>
-                            ) : (
-                                <span className="font-medium text-foreground">
-                                    {user?.email?.address || 'Unknown User'}
-                                </span>
-                            )}
-                        </span>
+            <div className="bg-white">
+                <div className="flex h-14 items-center justify-between px-2 md:px-4">
+                    <div className="text-sm font-medium text-neutral-950">
+                        LensLlama
                     </div>
-                    <Button variant="outline" size="sm" onClick={logout}>
-                        Logout
-                    </Button>
+                    <div className="flex items-center gap-6">
+                        <span className="text-sm text-neutral-600">
+                            {formattedBalance} USDC
+                        </span>
+                        <Link href="/upload">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-sm text-neutral-600 bg-[#FDF6E3] hover:text-neutral-950 hover:bg-[#F5EED6]"
+                            >
+                                Upload
+                            </Button>
+                        </Link>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={logout}
+                            className="text-sm text-neutral-600 bg-[#FDF6E3] hover:text-neutral-950 hover:bg-[#F5EED6]"
+                        >
+                            Sign Out
+                        </Button>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="border-b bg-muted/50">
-            <div className="container flex h-14 items-center justify-between px-4">
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">
-                        Sign in to access all features
-                    </span>
+        <div className="bg-white">
+            <div className="flex h-14 items-center justify-between px-2 md:px-4">
+                <div className="text-sm font-medium text-neutral-950">
+                    LensLlama
                 </div>
-                <Button size="sm" onClick={login}>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={login}
+                    className="text-sm text-neutral-600 bg-[#FDF6E3] hover:text-neutral-950 hover:bg-[#F5EED6]"
+                >
                     Sign In
                 </Button>
             </div>

@@ -33,6 +33,7 @@ export default function ImageDetailPage() {
   const [purchasing, setPurchasing] = useState(false);
   const [purchased, setPurchased] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   const { authenticated, login } = useAuth();
   const { purchaseImage, hasWallet } = useX402Payment();
@@ -158,11 +159,17 @@ export default function ImageDetailPage() {
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">
         <div className="grid gap-12 md:grid-cols-2">
           {/* Image - left column */}
-          <div>
+          <div className="relative">
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#FDF6E3]">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-black/20 border-t-black" />
+              </div>
+            )}
             <img
               src={`/api/images/${imageId}/preview`}
               alt={image.title}
-              className="w-full"
+              className={`w-full transition-opacity duration-500 ${imageLoaded ? 'opacity-100' : 'opacity-0'}`}
+              onLoad={() => setImageLoaded(true)}
             />
           </div>
 
