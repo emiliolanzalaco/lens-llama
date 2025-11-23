@@ -74,7 +74,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
           <p className="text-xs font-bold truncate">{image.title}</p>
           {image.photographerUsername && (
             <p className="text-xs opacity-80 truncate">
-              by {image.photographerUsername}.lensllama.eth
+              by {image.photographerUsername}
             </p>
           )}
         </div>
