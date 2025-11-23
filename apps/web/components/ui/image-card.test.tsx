@@ -5,7 +5,7 @@ import ImageCard from './image-card';
 describe('ImageCard', () => {
   const mockImage = {
     id: '550e8400-e29b-41d4-a716-446655440001',
-    watermarkedCid: 'QmYxT4LnK8sqLupjbS6eRvu1si7Ly2wFQAqFebxhWntcf6',
+    watermarkedBlobUrl: 'https://blob.vercel-storage.com/test-image.jpg',
     title: 'Sunset over Mountains',
     description: 'A beautiful sunset',
     priceUsdc: '5.00',
@@ -14,13 +14,13 @@ describe('ImageCard', () => {
 
   const mockOnClick = vi.fn();
 
-  it('renders image with correct Filecoin API URL', () => {
+  it('renders image with correct blob URL', () => {
     render(<ImageCard image={mockImage} onClick={mockOnClick} />);
     const image = screen.getByAltText('Sunset over Mountains');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute(
       'src',
-      expect.stringContaining('/api/filecoin-image?cid=')
+      expect.stringContaining('blob.vercel-storage.com')
     );
   });
 

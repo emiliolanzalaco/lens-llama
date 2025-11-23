@@ -33,7 +33,7 @@ vi.mock('@lens-llama/image-processing', () => ({
 }));
 
 vi.mock('@lens-llama/storage', () => ({
-  uploadToFilecoin: vi.fn().mockResolvedValue({ pieceCid: 'test-cid', size: 100 }),
+  uploadToBlob: vi.fn().mockResolvedValue({ url: 'https://blob.vercel-storage.com/test', size: 100 }),
 }));
 
 function createFormData(overrides: Record<string, string | Blob> = {}) {
@@ -108,7 +108,7 @@ describe('POST /api/upload', () => {
     expect(data.error).toBe('Price must be a positive number');
   });
 
-  it('successfully uploads image and returns CIDs', async () => {
+  it('successfully uploads image and returns blob URLs', async () => {
     const formData = createFormData({
       tags: 'nature, landscape',
       description: 'A beautiful sunset',
@@ -119,7 +119,7 @@ describe('POST /api/upload', () => {
 
     expect(response.status).toBe(200);
     expect(data.id).toBe('test-uuid');
-    expect(data.encryptedCid).toBe('test-cid');
-    expect(data.watermarkedCid).toBe('test-cid');
+    expect(data.originalBlobUrl).toBe('https://blob.vercel-storage.com/test');
+    expect(data.watermarkedBlobUrl).toBe('https://blob.vercel-storage.com/test');
   });
 });
