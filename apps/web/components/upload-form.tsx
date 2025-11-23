@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 
-const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const uploadSchema = z.object({
@@ -205,7 +205,7 @@ export function UploadForm() {
             <div className="text-neutral-600">
               <p className="mb-2">Drag and drop or click to upload</p>
               <p className="text-sm text-neutral-400">
-                JPEG, PNG, WebP up to 20MB
+                JPEG, PNG, WebP up to 50MB
               </p>
             </div>
           )}
