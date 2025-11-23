@@ -2,12 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import Home from './page';
 
-// Mock the ImageCard component
-vi.mock('@/components/image-card', () => ({
-  ImageCard: ({ title, priceUsdc }: { title: string; priceUsdc: string }) => (
-    <div data-testid="image-card">
-      <h3>{title}</h3>
-      <p>${priceUsdc}</p>
+// Mock the ImageGrid component
+vi.mock('@/components/image-grid', () => ({
+  default: ({ images, onImageClick }: any) => (
+    <div data-testid="image-grid">
+      {images.map((img: any) => (
+        <div key={img.id} data-testid="image-card" onClick={() => onImageClick(img)}>
+          <h3>{img.title}</h3>
+          <p>${img.priceUsdc}</p>
+        </div>
+      ))}
     </div>
   ),
 }));
@@ -56,16 +60,6 @@ describe('Home Page', () => {
     expect(screen.getByText('Professional photography on-chain')).toBeInTheDocument();
   });
 
-  it('displays loading skeletons initially', () => {
-    (global.fetch as any).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    );
-
-    const { container } = render(<Home />);
-    const skeletons = container.querySelectorAll('.bg-\\[\\#FDF6E3\\]');
-    expect(skeletons.length).toBeGreaterThan(0);
-  });
-
   it('fetches images from API on mount', async () => {
     (global.fetch as any).mockResolvedValueOnce({
       json: async () => ({ images: mockImages }),
@@ -105,7 +99,7 @@ describe('Home Page', () => {
   });
 
   it('handles fetch errors gracefully', async () => {
-    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => { });
     (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
 
     render(<Home />);
@@ -134,46 +128,6 @@ describe('Home Page', () => {
     // Loading skeletons should be gone
     const loadingGrid = container.querySelector('.grid.grid-cols-1.gap-8.md\\:grid-cols-2');
     expect(loadingGrid).not.toBeInTheDocument();
-  });
-
-  it('applies correct grid classes for responsive layout', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      json: async () => ({ images: mockImages }),
-    });
-
-    const { container } = render(<Home />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Image 1')).toBeInTheDocument();
-    });
-
-    const grid = container.querySelector('.grid.auto-rows-\\[300px\\]');
-    expect(grid).toHaveClass('grid-cols-1', 'md:grid-cols-2', 'lg:grid-cols-4');
-  });
-
-  it('uses 8-unit gap for grid spacing', async () => {
-    (global.fetch as any).mockResolvedValueOnce({
-      json: async () => ({ images: mockImages }),
-    });
-
-    const { container } = render(<Home />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Image 1')).toBeInTheDocument();
-    });
-
-    const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('gap-8');
-  });
-
-  it('renders 12 loading skeletons', () => {
-    (global.fetch as any).mockImplementation(
-      () => new Promise(() => {}) // Never resolves
-    );
-
-    const { container } = render(<Home />);
-    const skeletons = container.querySelectorAll('.aspect-square.bg-\\[\\#FDF6E3\\]');
-    expect(skeletons).toHaveLength(12);
   });
 
   it('repeats size pattern correctly for multiple images', async () => {

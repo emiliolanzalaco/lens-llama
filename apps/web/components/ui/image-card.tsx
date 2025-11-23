@@ -43,6 +43,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(image)}
+      data-testid="image-card"
     >
       <div className="relative h-full w-full">
         <Image

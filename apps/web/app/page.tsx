@@ -54,7 +54,7 @@ export default function Home() {
       <div className="w-full px-2 md:px-4 mx-auto pb-20">
         {isLoading ? (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-flow-dense auto-rows-[180px]">
-            {Array.from({ length: 12 }).map((_, i) => (
+            {Array.from({ length: 50 }).map((_, i) => (
               <div
                 key={i}
                 className="bg-gray-200"
