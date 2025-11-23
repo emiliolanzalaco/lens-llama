@@ -18,9 +18,9 @@ export function AuthBanner() {
         return (
             <div className="bg-white">
                 <div className="flex h-14 items-center justify-between px-2 md:px-4">
-                    <div className="text-sm font-medium text-neutral-950">
+                    <Link href="/" className="text-sm font-medium text-neutral-950 hover:text-neutral-700">
                         LensLlama
-                    </div>
+                    </Link>
                     <div className="flex items-center gap-6">
                         <span className="text-sm text-neutral-600">
                             {formattedBalance} USDC
@@ -51,9 +51,9 @@ export function AuthBanner() {
     return (
         <div className="bg-white">
             <div className="flex h-14 items-center justify-between px-2 md:px-4">
-                <div className="text-sm font-medium text-neutral-950">
+                <Link href="/" className="text-sm font-medium text-neutral-950 hover:text-neutral-700">
                     LensLlama
-                </div>
+                </Link>
                 <Button
                     variant="ghost"
                     size="sm"
