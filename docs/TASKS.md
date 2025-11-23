@@ -211,14 +211,14 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 **Branch:** `feature/homepage` | **Assigned:** _unclaimed_
 
 ### 3.3 Image Detail API (x402)
-- [x] Create GET /api/images/[id] route handler
-- [x] Check for existing license in database (buyer + image)
-- [x] Check for x402 payment proof in request headers
+- [ ] Create GET /api/images/[id] route handler
+- [ ] Check for existing license in database (buyer + image)
+- [ ] Check for x402 payment proof in request headers
 - [ ] If no license and no payment: return 402 with x402 headers + watermarked preview
-- [x] If valid payment proof: verify → split revenue → create license → return decrypted image
-- [x] If license exists: return decrypted image (re-download)
-- [x] Write integration tests for all three paths
-- [x] Test invalid image ID, invalid payment proof
+- [ ] If valid payment proof: verify → split revenue → create license → return decrypted image
+- [ ] If license exists: return decrypted image (re-download)
+- [ ] Write integration tests for all three paths
+- [ ] Test invalid image ID, invalid payment proof
 
 **Branch:** `feature/image-detail-api` | **Assigned:** _unclaimed_
 
