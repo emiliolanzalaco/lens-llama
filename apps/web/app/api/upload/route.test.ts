@@ -10,8 +10,16 @@ vi.mock('@lens-llama/database', () => ({
         returning: vi.fn().mockResolvedValue([{ id: 'test-uuid' }]),
       }),
     }),
+    select: vi.fn().mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    }),
   },
   images: {},
+  usernames: {},
   encryptWithMasterKey: vi.fn().mockReturnValue('encrypted-key'),
 }));
 
@@ -100,18 +108,18 @@ describe('POST /api/upload', () => {
     expect(data.error).toBe('Price must be a positive number');
   });
 
-  // it('successfully uploads image and returns CIDs', async () => {
-  //   const formData = createFormData({
-  //     tags: 'nature, landscape',
-  //     description: 'A beautiful sunset',
-  //   });
+  it('successfully uploads image and returns CIDs', async () => {
+    const formData = createFormData({
+      tags: 'nature, landscape',
+      description: 'A beautiful sunset',
+    });
 
-  //   const response = await POST(createRequest(formData));
-  //   const data = await response.json();
+    const response = await POST(createRequest(formData));
+    const data = await response.json();
 
-  //   expect(response.status).toBe(200);
-  //   expect(data.id).toBe('test-uuid');
-  //   expect(data.encryptedCid).toBe('test-cid');
-  //   expect(data.watermarkedCid).toBe('test-cid');
-  // });
+    expect(response.status).toBe(200);
+    expect(data.id).toBe('test-uuid');
+    expect(data.encryptedCid).toBe('test-cid');
+    expect(data.watermarkedCid).toBe('test-cid');
+  });
 });
