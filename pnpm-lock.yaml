@@ -24,15 +24,6 @@ importers:
         specifier: ^1.12.4
         version: 1.13.4
 
-  apps/facilitator:
-    devDependencies:
-      '@lens-llama/config':
-        specifier: workspace:*
-        version: link:../../packages/config
-      typescript:
-        specifier: ^5.3.3
-        version: 5.9.3
-
   apps/web:
     dependencies:
       '@lens-llama/database':

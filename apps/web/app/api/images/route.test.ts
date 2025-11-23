@@ -285,7 +285,7 @@ describe('GET /api/images', () => {
       expect(image).toHaveProperty('photographerAddress');
     });
 
-    it('calls database with correct column exclusions', async () => {
+    it('calls database with correct pagination parameters', async () => {
       (db.query.images.findMany as any).mockResolvedValue([]);
 
       const request = new Request('http://localhost:3000/api/images');
@@ -293,20 +293,8 @@ describe('GET /api/images', () => {
 
       expect(db.query.images.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          columns: expect.objectContaining({
-            id: true,
-            watermarkedCid: true,
-            title: true,
-            priceUsdc: true,
-            photographerAddress: true,
-            encryptedCid: false,
-            encryptionKey: false,
-            description: false,
-            tags: false,
-            width: false,
-            height: false,
-            createdAt: false,
-          }),
+          limit: 25,
+          offset: 0,
         })
       );
     });

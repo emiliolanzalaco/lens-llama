@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { db } from '@lens-llama/database';
 import { z } from 'zod';
 
+// Disable caching for this route
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 class ValidationError extends Error {
   constructor(message: string) {
@@ -70,21 +72,6 @@ export async function GET(request: Request) {
       orderBy: (images, { desc }) => [desc(images.createdAt)],
       limit: limit,
       offset: offset,
-      columns: {
-        id: true,
-        watermarkedCid: true,
-        title: true,
-        priceUsdc: true,
-        photographerAddress: true,
-        // Explicitly exclude sensitive fields
-        encryptedCid: false,
-        encryptionKey: false,
-        description: false,
-        tags: false,
-        width: false,
-        height: false,
-        createdAt: false,
-      },
     });
 
     return NextResponse.json({
