@@ -12,7 +12,7 @@ export const COIN_TYPES = {
 export interface NameStoneConfig {
   apiKey: string;
   parentDomain: string;
-  network: 'mainnet' | 'sepolia';
+  network: 'sepolia';
 }
 
 export interface ClaimNameResponse {

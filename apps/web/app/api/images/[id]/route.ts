@@ -109,6 +109,7 @@ function return402Response(image: typeof images.$inferSelect, baseUrl: string) {
       title: image.title,
       description: image.description,
       photographerAddress: image.photographerAddress,
+      photographerUsername: image.photographerUsername,
       priceUsdc: image.priceUsdc,
       watermarkedCid: image.watermarkedCid,
       width: image.width,
