@@ -1,5 +1,3 @@
-export type ImageSize = 'small' | 'medium' | 'large' | 'tall' | 'wide';
-
 export interface Image {
     id: string;
     title: string;
@@ -9,9 +7,6 @@ export interface Image {
     photographerAddress: string;
     photographerUsername?: string | null;
     priceUsdc: string;
-    size: ImageSize;
-}
-
-export interface ImageWithSize extends Image {
-    size: ImageSize;
+    width: number;
+    height: number;
 }

@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import ImageGrid from '@/components/image-grid';
-import { ImageWithSize, ImageSize } from '@/components/types';
+import { Image } from '@/components/types';
 
 export default function Home() {
-  const [images, setImages] = useState<ImageWithSize[]>([]);
+  const [images, setImages] = useState<Image[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -13,16 +13,7 @@ export default function Home() {
       try {
         const response = await fetch('/api/images?limit=30');
         const data = await response.json();
-
-        // Assign bento sizes in a repeating pattern
-        // Pattern uses large (2x2) instead of wide (2x1) to reduce cropping
-        const sizes: ImageSize[] = ['large', 'small', 'small', 'small', 'tall', 'small'];
-        const imagesWithSizes = data.images.map((img: ImageData, index: number) => ({
-          ...img,
-          size: sizes[index % sizes.length],
-        }));
-
-        setImages(imagesWithSizes);
+        setImages(data.images);
       } catch (error) {
         console.error('Failed to fetch images:', error);
       } finally {
@@ -33,7 +24,7 @@ export default function Home() {
     fetchImages();
   }, []);
 
-  const handleImageClick = (image: ImageWithSize) => {
+  const handleImageClick = (image: Image) => {
     console.log('Image clicked:', image);
   };
 
@@ -41,11 +32,12 @@ export default function Home() {
     <div className="min-h-screen bg-white">
       <div className="w-full px-2 md:px-4 mx-auto pb-20">
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-flow-dense auto-rows-[180px]">
-            {Array.from({ length: 50 }).map((_, i) => (
+          <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2">
+            {Array.from({ length: 20 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-gray-200"
+                className="bg-gray-200 mb-2 break-inside-avoid"
+                style={{ aspectRatio: i % 3 === 0 ? '3/4' : i % 3 === 1 ? '4/3' : '1/1' }}
               />
             ))}
           </div>

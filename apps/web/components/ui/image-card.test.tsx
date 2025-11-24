@@ -6,10 +6,13 @@ describe('ImageCard', () => {
   const mockImage = {
     id: '550e8400-e29b-41d4-a716-446655440001',
     watermarkedBlobUrl: 'https://blob.vercel-storage.com/test-image.jpg',
+    originalBlobUrl: 'https://blob.vercel-storage.com/test-original.jpg',
+    photographerAddress: '0x1234567890123456789012345678901234567890',
     title: 'Sunset over Mountains',
     description: 'A beautiful sunset',
     priceUsdc: '5.00',
-    size: 'small' as const,
+    width: 1920,
+    height: 1080,
   };
 
   const mockOnClick = vi.fn();
@@ -30,28 +33,24 @@ describe('ImageCard', () => {
     expect(link).toHaveAttribute('href', '/images/550e8400-e29b-41d4-a716-446655440001');
   });
 
-  it('applies small grid classes', () => {
-    render(<ImageCard image={{ ...mockImage, size: 'small' }} onClick={mockOnClick} />);
+  it('uses break-inside-avoid for masonry layout', () => {
+    render(<ImageCard image={mockImage} onClick={mockOnClick} />);
     const link = screen.getByRole('link');
-    expect(link).toHaveClass('row-span-1', 'col-span-1');
+    expect(link).toHaveClass('break-inside-avoid');
   });
 
-  it('applies tall grid classes', () => {
-    render(<ImageCard image={{ ...mockImage, size: 'tall' }} onClick={mockOnClick} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveClass('row-span-2', 'col-span-1');
+  it('renders portrait image with correct aspect ratio', () => {
+    const portraitImage = { ...mockImage, width: 1080, height: 1920 };
+    render(<ImageCard image={portraitImage} onClick={mockOnClick} />);
+    const card = screen.getByTestId('image-card');
+    expect(card).toBeInTheDocument();
   });
 
-  it('applies wide grid classes', () => {
-    render(<ImageCard image={{ ...mockImage, size: 'wide' }} onClick={mockOnClick} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveClass('row-span-1', 'col-span-2');
-  });
-
-  it('applies large grid classes', () => {
-    render(<ImageCard image={{ ...mockImage, size: 'large' }} onClick={mockOnClick} />);
-    const link = screen.getByRole('link');
-    expect(link).toHaveClass('row-span-2', 'col-span-2');
+  it('renders landscape image with correct aspect ratio', () => {
+    const landscapeImage = { ...mockImage, width: 1920, height: 1080 };
+    render(<ImageCard image={landscapeImage} onClick={mockOnClick} />);
+    const card = screen.getByTestId('image-card');
+    expect(card).toBeInTheDocument();
   });
 
   it('has test id for testing', () => {

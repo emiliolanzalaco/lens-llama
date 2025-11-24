@@ -3,27 +3,13 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
-import { Image as ImagePin } from '../types';
+import { Image as ImageType } from '../types';
 import { LoadingSpinner } from './loading-spinner';
 
 interface ImageCardProps {
-  image: ImagePin,
-  onClick: (image: ImagePin) => void;
+  image: ImageType;
+  onClick: (image: ImageType) => void;
 }
-
-const getGridClasses = (size: ImagePin['size']): string => {
-  switch (size) {
-    case 'tall':
-      return 'row-span-2 col-span-1';
-    case 'wide':
-      return 'row-span-1 col-span-2';
-    case 'large':
-      return 'row-span-2 col-span-2';
-    case 'small':
-    default:
-      return 'row-span-1 col-span-1';
-  }
-};
 
 const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps) => {
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -35,7 +21,10 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
   // Show error state if image failed to load
   if (imageError) {
     return (
-      <div className={`relative bg-[#FDF6E3] flex items-center justify-center ${getGridClasses(image.size)}`}>
+      <div
+        className="relative bg-[#FDF6E3] flex items-center justify-center mb-2 break-inside-avoid"
+        style={{ aspectRatio: `${image.width}/${image.height}` }}
+      >
         <span className="text-xs text-neutral-400">Failed to load</span>
       </div>
     );
@@ -44,21 +33,25 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
   return (
     <Link
       href={`/images/${image.id}`}
-      className={`relative group overflow-hidden cursor-pointer ${getGridClasses(image.size)}`}
+      className="relative group overflow-hidden cursor-pointer block mb-2 break-inside-avoid"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => onClick(image)}
       data-testid="image-card"
     >
-      <div className="relative h-full w-full">
+      <div
+        className="relative w-full"
+        style={{ aspectRatio: `${image.width}/${image.height}` }}
+      >
         {!imageLoaded && <LoadingSpinner size="sm" />}
         <Image
           src={imageUrl}
           alt={image.title}
           fill
-          className={`w-full h-full object-cover transition-all duration-700 ${imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
-            } group-hover:scale-105`}
-          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          className={`w-full h-full object-cover transition-all duration-700 ${
+            imageLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-105'
+          } group-hover:scale-105`}
+          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
           onLoad={() => setImageLoaded(true)}
           onError={() => {
             console.error('Failed to load image:', image.watermarkedBlobUrl);
@@ -80,9 +73,9 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
         </div>
         <p className="text-white text-xs font-bold">${image.priceUsdc}</p>
       </div>
-    </Link >
+    </Link>
   );
-}
+};
 
 export default ImageCard;
 
