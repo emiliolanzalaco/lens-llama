@@ -29,7 +29,9 @@ export async function resizeForPreview(imageBuffer: Buffer): Promise<Buffer> {
 }
 
 export async function getImageDimensions(imageBuffer: Buffer): Promise<{ width: number; height: number }> {
-  const metadata = await sharp(imageBuffer).metadata();
+  // .rotate() without args auto-rotates based on EXIF orientation
+  // This ensures we get dimensions after rotation is applied
+  const metadata = await sharp(imageBuffer).rotate().metadata();
   return {
     width: metadata.width || 0,
     height: metadata.height || 0,
