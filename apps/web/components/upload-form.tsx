@@ -10,6 +10,11 @@ import { FileDropzone } from '@/components/ui/file-dropzone';
 import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { UsernameClaimModal } from '@/components/username-claim-modal';
+import {
+  getImageDimensions,
+  createWatermarkedPreview,
+  type ImageDimensions,
+} from '@/lib/client-image-processing';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -38,6 +43,8 @@ export function UploadForm() {
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState<ImageDimensions | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
@@ -62,7 +69,7 @@ export function UploadForm() {
     return null;
   };
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
+  const handleFileSelect = useCallback(async (selectedFile: File) => {
     const error = validateFile(selectedFile);
     if (error) {
       setErrors((prev) => ({ ...prev, file: error }));
@@ -70,13 +77,27 @@ export function UploadForm() {
     }
 
     setFile(selectedFile);
+    setDimensions(null);
+    setIsProcessingImage(true);
     setErrors((prev) => ({ ...prev, file: undefined }));
 
+    // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       setPreview(e.target?.result as string);
     };
     reader.readAsDataURL(selectedFile);
+
+    // Extract dimensions
+    try {
+      const dims = await getImageDimensions(selectedFile);
+      setDimensions(dims);
+    } catch (err) {
+      console.error('Failed to extract dimensions:', err);
+      setErrors((prev) => ({ ...prev, file: 'Failed to process image' }));
+    } finally {
+      setIsProcessingImage(false);
+    }
   }, []);
 
   const handleInputChange = (
@@ -88,12 +109,16 @@ export function UploadForm() {
   };
 
   const performUpload = async () => {
-    if (!file || !walletAddress) return;
+    if (!file || !walletAddress || !dimensions) return;
 
     setIsUploading(true);
     setUploadProgress(0);
 
     try {
+      // Create watermarked preview
+      setUploadProgress(10);
+      const watermarkedFile = await createWatermarkedPreview(file, dimensions);
+
       // Prepare metadata to send with the upload
       const metadata = {
         title: formData.title,
@@ -101,18 +126,32 @@ export function UploadForm() {
         tags: formData.tags,
         price: formData.price,
         photographerAddress: walletAddress,
+        width: dimensions.width,
+        height: dimensions.height,
       };
 
-      // Upload directly to Vercel Blob from the client
+      setUploadProgress(20);
+
+      // Upload original and watermarked files to Vercel Blob from the client
       // The server validates metadata and generates the upload token
-      await upload(file.name, file, {
-        access: 'public',
-        handleUploadUrl: '/api/upload',
-        clientPayload: JSON.stringify(metadata),
-        onUploadProgress: ({ percentage }) => {
-          setUploadProgress(percentage);
-        },
-      });
+      const [originalBlob, watermarkedBlob] = await Promise.all([
+        upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: JSON.stringify({ ...metadata, type: 'original' }),
+          onUploadProgress: ({ percentage }) => {
+            setUploadProgress(20 + percentage * 0.4); // 20-60%
+          },
+        }),
+        upload(watermarkedFile.name, watermarkedFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: JSON.stringify({ ...metadata, type: 'watermarked' }),
+          onUploadProgress: ({ percentage }) => {
+            setUploadProgress(60 + percentage * 0.4); // 60-100%
+          },
+        }),
+      ]);
 
       // Small delay to show 100% before redirect
       setUploadProgress(100);
@@ -238,8 +277,12 @@ export function UploadForm() {
           <p className="text-sm text-red-600">{submitError}</p>
         )}
 
-        <Button type="submit" disabled={isUploading} className="w-full">
-          {isUploading ? 'Uploading...' : 'Upload Image'}
+        <Button
+          type="submit"
+          disabled={isUploading || isProcessingImage}
+          className="w-full"
+        >
+          {isUploading ? 'Uploading...' : isProcessingImage ? 'Processing...' : 'Upload Image'}
         </Button>
       </form>
 

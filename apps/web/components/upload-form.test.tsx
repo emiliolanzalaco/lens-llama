@@ -21,6 +21,14 @@ vi.mock('@vercel/blob/client', () => ({
   upload: vi.fn(),
 }));
 
+// Mock client image processing
+vi.mock('@/lib/client-image-processing', () => ({
+  getImageDimensions: vi.fn().mockResolvedValue({ width: 1920, height: 1080 }),
+  createWatermarkedPreview: vi.fn().mockImplementation((file: File) =>
+    Promise.resolve(new File(['watermarked'], 'watermarked-test.jpg', { type: 'image/jpeg' }))
+  ),
+}));
+
 import { upload as mockUpload } from '@vercel/blob/client';
 
 // Mock fetch for username check
@@ -64,6 +72,11 @@ describe('UploadForm', () => {
     const input = getFileInput(container);
     fireEvent.change(input, { target: { files: [file] } });
 
+    // Wait for image processing to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+    });
+
     // Fill price but not title
     fireEvent.change(screen.getByLabelText(/price/i), {
       target: { value: '10' },
@@ -84,6 +97,11 @@ describe('UploadForm', () => {
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     const input = getFileInput(container);
     fireEvent.change(input, { target: { files: [file] } });
+
+    // Wait for image processing to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+    });
 
     // Fill form with invalid price
     fireEvent.change(screen.getByLabelText(/^title$/i), {
@@ -143,6 +161,11 @@ describe('UploadForm', () => {
     const input = getFileInput(container);
     fireEvent.change(input, { target: { files: [file] } });
 
+    // Wait for image processing to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+    });
+
     // Fill form
     fireEvent.change(screen.getByLabelText(/^title$/i), {
       target: { value: 'Test Image' },
@@ -168,6 +191,11 @@ describe('UploadForm', () => {
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     const input = getFileInput(container);
     fireEvent.change(input, { target: { files: [file] } });
+
+    // Wait for image processing to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+    });
 
     fireEvent.change(screen.getByLabelText(/^title$/i), {
       target: { value: 'Test Image' },

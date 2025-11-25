@@ -25,15 +25,6 @@ vi.mock('@lens-llama/database', () => ({
   usernames: {},
 }));
 
-vi.mock('@lens-llama/image-processing', () => ({
-  addWatermark: vi.fn().mockResolvedValue(Buffer.from('watermarked')),
-  resizeForPreview: vi.fn().mockResolvedValue(Buffer.from('resized')),
-  getImageDimensions: vi.fn().mockResolvedValue({ width: 1920, height: 1080 }),
-}));
-
-vi.mock('@lens-llama/storage', () => ({
-  uploadToBlob: vi.fn().mockResolvedValue({ url: 'https://blob.vercel-storage.com/test', size: 100 }),
-}));
 
 import { handleUpload } from '@vercel/blob/client';
 
@@ -95,9 +86,12 @@ describe('POST /api/upload', () => {
       await POST(request);
 
       const metadata = {
+        type: 'original',
         title: 'Test Image',
         description: null,
         tags: 'nature',
+        width: 1920,
+        height: 1080,
         price: '10.00',
         photographerAddress: '0x1234567890123456789012345678901234567890',
       };
@@ -153,9 +147,14 @@ describe('POST /api/upload', () => {
       await POST(request);
 
       const invalidMetadata = {
+        type: 'original',
         title: '', // Empty title
+        description: null,
+        tags: '',
         price: '10.00',
         photographerAddress: '0x1234567890123456789012345678901234567890',
+        width: 1920,
+        height: 1080,
       };
 
       await expect(
@@ -180,11 +179,14 @@ describe('POST /api/upload', () => {
       await POST(request);
 
       const invalidMetadata = {
+        type: 'original',
         title: 'Test',
         description: null,
         tags: '',
         price: '-5',
         photographerAddress: '0x1234567890123456789012345678901234567890',
+        width: 1920,
+        height: 1080,
       };
 
       await expect(
