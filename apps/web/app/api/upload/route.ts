@@ -84,10 +84,21 @@ async function processImage(imageBuffer: Buffer) {
 }
 
 function sanitizeFilename(filename: string): string {
-  return filename
+  // Extract extension (last occurrence only to prevent multiple extension attacks)
+  const lastDot = filename.lastIndexOf('.');
+  const ext = lastDot > 0 ? filename.slice(lastDot) : '';
+  const base = lastDot > 0 ? filename.slice(0, lastDot) : filename;
+
+  // Sanitize base: allow only alphanumeric, underscore, dash
+  const safeBase = base
     .replace(/[/\\]/g, '-')
     .replace(/\.\./g, '-')
-    .replace(/[^a-zA-Z0-9._-]/g, '_');
+    .replace(/[^a-zA-Z0-9_-]/g, '_');
+
+  // Sanitize extension: allow only alphanumeric after the dot
+  const safeExt = ext.replace(/[^a-zA-Z0-9.]/g, '');
+
+  return safeBase + safeExt;
 }
 
 export async function POST(request: NextRequest) {
