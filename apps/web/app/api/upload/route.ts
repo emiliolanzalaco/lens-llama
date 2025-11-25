@@ -83,6 +83,13 @@ async function processImage(imageBuffer: Buffer) {
   return { dimensions, watermarked };
 }
 
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[/\\]/g, '-')
+    .replace(/\.\./g, '-')
+    .replace(/[^a-zA-Z0-9._-]/g, '_');
+}
+
 export async function POST(request: NextRequest) {
   try {
     console.log('[Upload] Starting upload...');
@@ -95,10 +102,11 @@ export async function POST(request: NextRequest) {
     const imageBuffer = Buffer.from(await data.file.arrayBuffer());
     const { dimensions, watermarked } = await processImage(imageBuffer);
 
-    // Generate unique filenames
+    // Generate unique filenames with sanitization to prevent path traversal
     const timestamp = Date.now();
-    const originalFilename = `original-${timestamp}-${data.file.name}`;
-    const watermarkedFilename = `watermarked-${timestamp}-${data.file.name}`;
+    const safeName = sanitizeFilename(data.file.name);
+    const originalFilename = `original-${timestamp}-${safeName}`;
+    const watermarkedFilename = `watermarked-${timestamp}-${safeName}`;
 
     console.log('[Upload] Uploading to Vercel Blob...');
     const [originalResult, watermarkedResult] = await Promise.all([
