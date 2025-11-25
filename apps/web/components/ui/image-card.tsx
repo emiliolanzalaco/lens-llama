@@ -17,13 +17,14 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
   const [isHovered, setIsHovered] = useState(false);
 
   const imageUrl = image.watermarkedBlobUrl;
+  const aspectRatio = image.height > 0 ? `${image.width}/${image.height}` : '1/1';
 
   // Show error state if image failed to load
   if (imageError) {
     return (
       <div
         className="relative bg-[#FDF6E3] flex items-center justify-center mb-2 break-inside-avoid"
-        style={{ aspectRatio: `${image.width}/${image.height}` }}
+        style={{ aspectRatio }}
       >
         <span className="text-xs text-neutral-400">Failed to load</span>
       </div>
@@ -41,7 +42,7 @@ const ImageCard: React.FC<ImageCardProps> = ({ image, onClick }: ImageCardProps)
     >
       <div
         className="relative w-full"
-        style={{ aspectRatio: `${image.width}/${image.height}` }}
+        style={{ aspectRatio }}
       >
         {!imageLoaded && <LoadingSpinner size="sm" />}
         <Image
