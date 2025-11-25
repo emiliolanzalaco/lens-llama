@@ -43,9 +43,22 @@ const getFileInput = (container: HTMLElement) => {
 describe('UploadForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockResolvedValue({
-      ok: true,
-      json: async () => ({ hasUsername: true }),
+    mockFetch.mockImplementation(async (url: string) => {
+      // Mock username check
+      if (url.includes('/api/username/check-user')) {
+        return {
+          ok: true,
+          json: async () => ({ hasUsername: true }),
+        } as Response;
+      }
+      // Mock upload complete
+      if (url.includes('/api/upload/complete')) {
+        return {
+          ok: true,
+          json: async () => ({ id: 'test-id' }),
+        } as Response;
+      }
+      return { ok: false } as Response;
     });
     vi.mocked(mockUpload).mockResolvedValue({
       url: 'https://blob.vercel-storage.com/test.jpg',

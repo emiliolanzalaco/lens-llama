@@ -105,7 +105,6 @@ describe('POST /api/upload', () => {
         allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
         maximumSizeInBytes: 50 * 1024 * 1024,
         addRandomSuffix: true,
-        tokenPayload: JSON.stringify(metadata),
       });
     });
 

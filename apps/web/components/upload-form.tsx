@@ -133,14 +133,13 @@ export function UploadForm() {
       setUploadProgress(20);
 
       // Upload original and watermarked files to Vercel Blob from the client
-      // The server validates metadata and generates the upload token
       const [originalBlob, watermarkedBlob] = await Promise.all([
         upload(file.name, file, {
           access: 'public',
           handleUploadUrl: '/api/upload',
           clientPayload: JSON.stringify({ ...metadata, type: 'original' }),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(20 + percentage * 0.4); // 20-60%
+            setUploadProgress(20 + percentage * 0.35); // 20-55%
           },
         }),
         upload(watermarkedFile.name, watermarkedFile, {
@@ -148,10 +147,33 @@ export function UploadForm() {
           handleUploadUrl: '/api/upload',
           clientPayload: JSON.stringify({ ...metadata, type: 'watermarked' }),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(60 + percentage * 0.4); // 60-100%
+            setUploadProgress(55 + percentage * 0.35); // 55-90%
           },
         }),
       ]);
+
+      // Save to database
+      setUploadProgress(90);
+      const completeResponse = await fetch('/api/upload/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          originalUrl: originalBlob.url,
+          watermarkedUrl: watermarkedBlob.url,
+          title: metadata.title,
+          description: metadata.description,
+          tags: metadata.tags,
+          price: metadata.price,
+          photographerAddress: metadata.photographerAddress,
+          width: metadata.width,
+          height: metadata.height,
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json();
+        throw new Error(error.error || 'Failed to save upload');
+      }
 
       // Small delay to show 100% before redirect
       setUploadProgress(100);
