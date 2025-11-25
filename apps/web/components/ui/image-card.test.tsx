@@ -43,14 +43,24 @@ describe('ImageCard', () => {
     const portraitImage = { ...mockImage, width: 1080, height: 1920 };
     render(<ImageCard image={portraitImage} onClick={mockOnClick} />);
     const card = screen.getByTestId('image-card');
-    expect(card).toBeInTheDocument();
+    const aspectRatioDiv = card.querySelector('div[style]');
+    expect(aspectRatioDiv).toHaveStyle({ aspectRatio: '1080/1920' });
   });
 
   it('renders landscape image with correct aspect ratio', () => {
     const landscapeImage = { ...mockImage, width: 1920, height: 1080 };
     render(<ImageCard image={landscapeImage} onClick={mockOnClick} />);
     const card = screen.getByTestId('image-card');
-    expect(card).toBeInTheDocument();
+    const aspectRatioDiv = card.querySelector('div[style]');
+    expect(aspectRatioDiv).toHaveStyle({ aspectRatio: '1920/1080' });
+  });
+
+  it('falls back to 1/1 aspect ratio when height is zero', () => {
+    const zeroHeightImage = { ...mockImage, width: 1920, height: 0 };
+    render(<ImageCard image={zeroHeightImage} onClick={mockOnClick} />);
+    const card = screen.getByTestId('image-card');
+    const aspectRatioDiv = card.querySelector('div[style]');
+    expect(aspectRatioDiv).toHaveStyle({ aspectRatio: '1/1' });
   });
 
   it('has test id for testing', () => {
