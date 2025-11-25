@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { db, images, usernames } from '@lens-llama/database';
 import {
   addWatermark,
@@ -12,14 +13,7 @@ import { eq } from 'drizzle-orm';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
-}
-
-const uploadSchema = z.object({
+const metadataSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().nullable(),
   tags: z.string().transform((val) =>
@@ -42,125 +36,101 @@ const uploadSchema = z.object({
   ),
 });
 
-type UploadRequest = z.infer<typeof uploadSchema> & { file: File };
+export async function POST(request: Request): Promise<Response> {
+  let body: HandleUploadBody;
 
-function validateRequest(formData: FormData): UploadRequest {
-  const file = formData.get('file') as File | null;
-
-  if (!file) {
-    throw new ValidationError('File is required');
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new ValidationError(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new ValidationError('Invalid file type. Allowed: JPEG, PNG, WebP');
-  }
-
-  const result = uploadSchema.safeParse({
-    title: formData.get('title') ?? '',
-    description: formData.get('description') ?? null,
-    tags: formData.get('tags') ?? '',
-    price: formData.get('price') ?? '',
-    photographerAddress: formData.get('photographerAddress') ?? '',
-  });
-
-  if (!result.success) {
-    const firstError = result.error.errors[0];
-    throw new ValidationError(firstError.message);
-  }
-
-  return { file, ...result.data };
-}
-
-async function processImage(imageBuffer: Buffer) {
-  const dimensions = await getImageDimensions(imageBuffer);
-  const resized = await resizeForPreview(imageBuffer);
-  const watermarked = await addWatermark(resized);
-
-  return { dimensions, watermarked };
-}
-
-function sanitizeFilename(filename: string): string {
-  // Extract extension (last occurrence only to prevent multiple extension attacks)
-  const lastDot = filename.lastIndexOf('.');
-  const ext = lastDot > 0 ? filename.slice(lastDot) : '';
-  const base = lastDot > 0 ? filename.slice(0, lastDot) : filename;
-
-  // Sanitize base: allow only alphanumeric, underscore, dash
-  const safeBase = base
-    .replace(/[/\\]/g, '-')
-    .replace(/\.\./g, '-')
-    .replace(/[^a-zA-Z0-9_-]/g, '_');
-
-  // Sanitize extension: allow only alphanumeric after the dot
-  const safeExt = ext.replace(/[^a-zA-Z0-9.]/g, '');
-
-  return safeBase + safeExt;
-}
-
-export async function POST(request: NextRequest) {
   try {
-    console.log('[Upload] Starting upload...');
+    body = (await request.json()) as HandleUploadBody;
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-    console.log('[Upload] Parsing form data...');
-    const formData = await request.formData();
-    const data = validateRequest(formData);
+  try {
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        // Validate metadata from client
+        if (!clientPayload) {
+          throw new Error('Missing upload metadata');
+        }
 
-    console.log('[Upload] Processing image...');
-    const imageBuffer = Buffer.from(await data.file.arrayBuffer());
-    const { dimensions, watermarked } = await processImage(imageBuffer);
+        const metadata = JSON.parse(clientPayload);
+        const result = metadataSchema.safeParse(metadata);
 
-    // Generate unique filenames with sanitization to prevent path traversal
-    const timestamp = Date.now();
-    const safeName = sanitizeFilename(data.file.name);
-    const originalFilename = `original-${timestamp}-${safeName}`;
-    const watermarkedFilename = `watermarked-${timestamp}-${safeName}`;
+        if (!result.success) {
+          const firstError = result.error.errors[0];
+          throw new Error(firstError.message);
+        }
 
-    console.log('[Upload] Uploading to Vercel Blob...');
-    const [originalResult, watermarkedResult] = await Promise.all([
-      uploadToBlob(imageBuffer, originalFilename),
-      uploadToBlob(watermarked, watermarkedFilename),
-    ]);
-    console.log('[Upload] Blob upload complete');
+        return {
+          allowedContentTypes: ALLOWED_TYPES,
+          maximumSizeInBytes: MAX_FILE_SIZE,
+          addRandomSuffix: true,
+          tokenPayload: clientPayload, // Pass metadata to onUploadCompleted
+        };
+      },
+      onUploadCompleted: async ({ blob, tokenPayload }) => {
+        // This runs after client uploads directly to Blob
+        console.log('[Upload] Client upload completed:', blob.pathname);
 
-    console.log('[Upload] Checking for existing username...');
-    const [existingUsername] = await db
-      .select()
-      .from(usernames)
-      .where(eq(usernames.userAddress, data.photographerAddress.toLowerCase()))
-      .limit(1);
+        if (!tokenPayload) {
+          throw new Error('Missing token payload');
+        }
 
-    console.log('[Upload] Saving to database...');
-    const [image] = await db
-      .insert(images)
-      .values({
-        originalBlobUrl: originalResult.url,
-        watermarkedBlobUrl: watermarkedResult.url,
-        photographerAddress: data.photographerAddress,
-        photographerUsername: existingUsername?.username || null,
-        title: data.title,
-        description: data.description,
-        tags: data.tags,
-        priceUsdc: data.price.toFixed(2),
-        width: dimensions.width,
-        height: dimensions.height,
-      })
-      .returning({ id: images.id });
-    console.log('[Upload] Complete! ID:', image.id);
+        const metadata = JSON.parse(tokenPayload);
+        const data = metadataSchema.parse(metadata);
 
-    return NextResponse.json({
-      id: image.id,
-      originalBlobUrl: originalResult.url,
-      watermarkedBlobUrl: watermarkedResult.url,
-      hasUsername: !!existingUsername,
-      isFirstUpload: !existingUsername,
+        // Fetch the uploaded image from Blob to process it
+        console.log('[Upload] Fetching uploaded image for processing...');
+        const imageResponse = await fetch(blob.url);
+        const imageBuffer = Buffer.from(await imageResponse.arrayBuffer());
+
+        // Process image: get dimensions and create watermarked version
+        console.log('[Upload] Processing image...');
+        const dimensions = await getImageDimensions(imageBuffer);
+        const resized = await resizeForPreview(imageBuffer);
+        const watermarked = await addWatermark(resized);
+
+        // Upload watermarked version
+        const timestamp = Date.now();
+        const watermarkedFilename = `watermarked-${timestamp}-${blob.pathname.split('/').pop()}`;
+        console.log('[Upload] Uploading watermarked version...');
+        const watermarkedResult = await uploadToBlob(watermarked, watermarkedFilename);
+
+        // Check for existing username
+        console.log('[Upload] Checking for existing username...');
+        const [existingUsername] = await db
+          .select()
+          .from(usernames)
+          .where(eq(usernames.userAddress, data.photographerAddress.toLowerCase()))
+          .limit(1);
+
+        // Save to database
+        console.log('[Upload] Saving to database...');
+        const [image] = await db
+          .insert(images)
+          .values({
+            originalBlobUrl: blob.url,
+            watermarkedBlobUrl: watermarkedResult.url,
+            photographerAddress: data.photographerAddress,
+            photographerUsername: existingUsername?.username || null,
+            title: data.title,
+            description: data.description,
+            tags: data.tags,
+            priceUsdc: data.price.toFixed(2),
+            width: dimensions.width,
+            height: dimensions.height,
+          })
+          .returning({ id: images.id });
+
+        console.log('[Upload] Complete! ID:', image.id);
+      },
     });
+
+    return NextResponse.json(jsonResponse);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';
-    const status = error instanceof ValidationError ? 400 : 500;
-    return NextResponse.json({ error: message }, { status });
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

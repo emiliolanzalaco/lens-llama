@@ -16,7 +16,14 @@ vi.mock('@/lib/hooks/use-auth', () => ({
   }),
 }));
 
-// Mock fetch
+// Mock @vercel/blob/client
+vi.mock('@vercel/blob/client', () => ({
+  upload: vi.fn(),
+}));
+
+import { upload as mockUpload } from '@vercel/blob/client';
+
+// Mock fetch for username check
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
@@ -30,8 +37,12 @@ describe('UploadForm', () => {
     vi.clearAllMocks();
     mockFetch.mockResolvedValue({
       ok: true,
-      json: async () => ({ id: 'test-id' }),
+      json: async () => ({ hasUsername: true }),
     });
+    vi.mocked(mockUpload).mockResolvedValue({
+      url: 'https://blob.vercel-storage.com/test.jpg',
+      pathname: 'test.jpg',
+    } as any);
   });
 
   it('renders all form fields', () => {
@@ -122,50 +133,8 @@ describe('UploadForm', () => {
     });
   });
 
-  it('submits form successfully with valid data', async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ hasUsername: true }),
-      })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ id: 'test-id' }),
-      });
-
-    const { container } = render(<UploadForm />);
-
-    // Create and select a file
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
-
-    // Fill form
-    fireEvent.change(screen.getByLabelText(/^title$/i), {
-      target: { value: 'Test Image' },
-    });
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '9.99' },
-    });
-
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
-    await waitFor(() => {
-      expect(mockFetch).toHaveBeenCalledWith('/api/upload', expect.any(Object));
-    });
-  });
-
   it('shows error message when upload fails', async () => {
-    mockFetch
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ hasUsername: true }),
-      })
-      .mockResolvedValueOnce({
-        ok: false,
-        json: async () => ({ error: 'Upload failed' }),
-      });
+    vi.mocked(mockUpload).mockRejectedValue(new Error('Upload failed'));
 
     const { container } = render(<UploadForm />);
 
@@ -187,6 +156,30 @@ describe('UploadForm', () => {
 
     await waitFor(() => {
       expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
+    });
+  });
+
+  it('shows uploading state during upload', async () => {
+    // Make upload hang to test loading state
+    vi.mocked(mockUpload).mockImplementation(() => new Promise(() => {}));
+
+    const { container } = render(<UploadForm />);
+
+    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+    const input = getFileInput(container);
+    fireEvent.change(input, { target: { files: [file] } });
+
+    fireEvent.change(screen.getByLabelText(/^title$/i), {
+      target: { value: 'Test Image' },
+    });
+    fireEvent.change(screen.getByLabelText(/price/i), {
+      target: { value: '9.99' },
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /uploading/i })).toBeDisabled();
     });
   });
 });

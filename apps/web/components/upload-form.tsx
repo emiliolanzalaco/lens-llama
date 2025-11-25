@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { upload } from '@vercel/blob/client';
 import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -93,30 +94,27 @@ export function UploadForm() {
     setUploadProgress(0);
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tags', formData.tags);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('photographerAddress', walletAddress);
+      // Prepare metadata to send with the upload
+      const metadata = {
+        title: formData.title,
+        description: formData.description || null,
+        tags: formData.tags,
+        price: formData.price,
+        photographerAddress: walletAddress,
+      };
 
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataToSend,
+      // Upload directly to Vercel Blob from the client
+      // The server validates metadata and generates the upload token
+      await upload(file.name, file, {
+        access: 'public',
+        handleUploadUrl: '/api/upload',
+        clientPayload: JSON.stringify(metadata),
+        onUploadProgress: ({ percentage }) => {
+          setUploadProgress(percentage);
+        },
       });
 
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
-      }
-
+      // Small delay to show 100% before redirect
       setUploadProgress(100);
       setTimeout(() => router.push('/'), 500);
     } catch (error) {
