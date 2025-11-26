@@ -24,7 +24,7 @@ export async function verifyAccessToken(token: string): Promise<VerifiedUser> {
     const claims = await privy.verifyAuthToken(token);
 
     // Get the user's linked wallets
-    const user = await privy.getUser(claims.userId);
+    const user = await privy.getUser({ idToken: claims.userId });
 
     // Find the first embedded or external wallet
     const wallet = user.linkedAccounts.find(

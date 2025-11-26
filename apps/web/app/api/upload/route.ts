@@ -7,6 +7,13 @@ import { doWalletAddressesMatch } from '@/lib/api-auth';
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+class ValidationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'ValidationError';
+  }
+}
+
 // Upload handler - validates metadata and generates upload tokens
 export async function POST(request: Request): Promise<Response> {
   let body: HandleUploadBody;
@@ -24,7 +31,7 @@ export async function POST(request: Request): Promise<Response> {
       onBeforeGenerateToken: async (pathname, clientPayload) => {
         // Validate metadata from client
         if (!clientPayload) {
-          throw new Error('Missing upload metadata');
+          throw new ValidationError('Missing upload metadata');
         }
 
         const metadata = JSON.parse(clientPayload);
@@ -32,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
 
         if (!result.success) {
           const firstError = result.error.errors[0];
-          throw new Error(firstError.message);
+          throw new ValidationError(firstError.message);
         }
 
         // Verify access token from clientPayload
@@ -40,7 +47,7 @@ export async function POST(request: Request): Promise<Response> {
 
         // Verify the photographer address matches the authenticated user's wallet
         if (!doWalletAddressesMatch(user, result.data.photographerAddress)) {
-          throw new Error('Photographer address does not match authenticated wallet');
+          throw new ValidationError('Photographer address does not match authenticated wallet');
         }
 
         return {
@@ -57,7 +64,12 @@ export async function POST(request: Request): Promise<Response> {
 
     return NextResponse.json(jsonResponse);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Upload failed';
-    return NextResponse.json({ error: message }, { status: 400 });
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    // Log internal errors for debugging but don't expose details to client
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

@@ -39,7 +39,7 @@ vi.mock('@/lib/client-image-processing', () => ({
   ),
 }));
 
-import { createWatermarkedPreview } from '@/lib/client-image-processing';
+import { getImageDimensions, createWatermarkedPreview } from '@/lib/client-image-processing';
 
 import { upload as mockUpload } from '@vercel/blob/client';
 
@@ -227,5 +227,27 @@ describe('UploadForm', () => {
     await waitFor(() => {
       expect(screen.getByText(/failed to process image/i)).toBeInTheDocument();
     });
+  });
+
+  it('extracts dimensions and creates watermarked file when valid image is selected', async () => {
+    // Arrange
+    const { container } = render(<UploadForm />);
+    const testFile = createTestFile();
+    const input = getFileInput(container);
+
+    // Act
+    fireEvent.change(input, { target: { files: [testFile] } });
+
+    // Assert - verify image processing functions were called
+    await waitFor(() => {
+      expect(getImageDimensions).toHaveBeenCalledWith(testFile);
+      expect(createWatermarkedPreview).toHaveBeenCalledWith(testFile, {
+        width: TEST_IMAGE_WIDTH,
+        height: TEST_IMAGE_HEIGHT,
+      });
+    });
+
+    // Verify button is enabled after processing
+    expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
   });
 });
