@@ -76,7 +76,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
   //     return;
   //   }
 
-  //   setErrors((prev) => ({ ...prev, file: undefined }));
+  //   setErrors((prev) => ({ ...prev, file: undefined })
 
   //   const reader = new FileReader();
   //   reader.onload = (e) => {
@@ -215,38 +215,41 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <FormField
-          label="Title"
-          name="title"
-          value={data.title}
-          onChange={handleInputChange}
-          error={errors.title}
-          placeholder="Enter image title"
-        />
+        <div className="space-y-1">
+          <input
+            type="text"
+            name="title"
+            value={data.title}
+            onChange={handleInputChange}
+            placeholder="Image title"
+            className="w-full text-3xl font-bold text-neutral-950 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent"
+          />
+          {errors.title && (
+            <p className="text-sm text-red-600">{errors.title}</p>
+          )}
+        </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-neutral-950">
-              Description
-            </label>
-          </div>
+        <div className="space-y-1">
           <textarea
             name="description"
             value={data.description}
             onChange={handleInputChange}
-            placeholder="Describe your image"
-            className="w-full rounded-md border border-neutral-200 bg-white px-3 py-2 text-sm placeholder:text-neutral-500 focus:border-neutral-950 focus:outline-none focus:ring-1 focus:ring-neutral-950 min-h-[100px]"
+            placeholder="Tell your story…"
+            className="w-full text-lg text-neutral-700 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent min-h-[100px] resize-none"
           />
         </div>
 
-        <FormField
-          label="Tags"
-          name="tags"
-          value={data.tags}
-          onChange={handleInputChange}
-          placeholder="nature, landscape, sunset"
-          optional
-        />
+        <div className="space-y-1">
+          <label htmlFor="tags" className="text-sm font-medium text-neutral-900">Tags</label>
+          <input
+            type="text"
+            name="tags"
+            value={data.tags}
+            onChange={handleInputChange}
+            placeholder="nature, landscape, sunset"
+            className="w-full text-lg text-neutral-700 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent min-h-[100px] resize-none"
+          />
+        </div>
 
         <FormField
           label="Price (USDC)"
