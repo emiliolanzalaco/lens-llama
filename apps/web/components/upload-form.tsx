@@ -247,18 +247,25 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
             value={data.tags}
             onChange={handleInputChange}
             placeholder="nature, landscape, sunset"
-            className="w-full text-lg text-neutral-700 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent min-h-[100px] resize-none"
+            className="w-full text-lg text-neutral-700 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent min-h-[50px] resize-none"
           />
         </div>
 
-        <FormField
-          label="Price (USDC)"
-          name="price"
-          value={data.price}
-          onChange={handleInputChange}
-          error={errors.price}
-          placeholder="9.99"
-        />
+        <div className='space-y-1'>
+          <label htmlFor="price" className="text-sm font-medium text-neutral-900">Price (USD)</label>
+          <div className='flex items-center gap-2'>
+            <span className="text-lg text-neutral-700">$</span>
+            <input
+              type="text"
+              name="price"
+              value={data.price}
+              onChange={handleInputChange}
+              placeholder="9.99"
+              className="w-full text-lg text-neutral-700 placeholder:text-neutral-400 border-none outline-none focus:outline-none p-0 bg-transparent min-h-[50px] resize-none"
+            />
+          </div>
+
+        </div>
 
         {isUploading && <ProgressBar progress={uploadProgress} />}
 
