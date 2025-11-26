@@ -1,15 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db, images, encryptWithMasterKey } from '@lens-llama/database';
+import { db, images, usernames } from '@lens-llama/database';
 import {
   addWatermark,
   resizeForPreview,
   getImageDimensions,
-  generateEncryptionKey,
-  encryptImage,
-  keyToHex,
 } from '@lens-llama/image-processing';
-import { uploadToFilecoin } from '@lens-llama/storage';
+import { uploadToBlob } from '@lens-llama/storage';
 import { z } from 'zod';
+import { eq } from 'drizzle-orm';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -82,22 +80,12 @@ async function processImage(imageBuffer: Buffer) {
   const resized = await resizeForPreview(imageBuffer);
   const watermarked = await addWatermark(resized);
 
-  const encryptionKey = generateEncryptionKey();
-  const encrypted = encryptImage(imageBuffer, encryptionKey);
-
-  return { dimensions, watermarked, encrypted, encryptionKey };
+  return { dimensions, watermarked };
 }
 
 export async function POST(request: NextRequest) {
   try {
     console.log('[Upload] Starting upload...');
-
-    // Fail fast if server is misconfigured
-    const masterKey = process.env.MASTER_ENCRYPTION_KEY;
-    if (!masterKey) {
-      console.error('MASTER_ENCRYPTION_KEY not set');
-      return NextResponse.json({ error: 'Server configuration error' }, { status: 500 });
-    }
 
     console.log('[Upload] Parsing form data...');
     const formData = await request.formData();
@@ -105,25 +93,35 @@ export async function POST(request: NextRequest) {
 
     console.log('[Upload] Processing image...');
     const imageBuffer = Buffer.from(await data.file.arrayBuffer());
-    const { dimensions, watermarked, encrypted, encryptionKey } = await processImage(imageBuffer);
+    const { dimensions, watermarked } = await processImage(imageBuffer);
 
-    console.log('[Upload] Uploading to Filecoin...');
-    const [encryptedResult, watermarkedResult] = await Promise.all([
-      uploadToFilecoin(encrypted),
-      uploadToFilecoin(watermarked),
+    // Generate unique filenames
+    const timestamp = Date.now();
+    const originalFilename = `original-${timestamp}-${data.file.name}`;
+    const watermarkedFilename = `watermarked-${timestamp}-${data.file.name}`;
+
+    console.log('[Upload] Uploading to Vercel Blob...');
+    const [originalResult, watermarkedResult] = await Promise.all([
+      uploadToBlob(imageBuffer, originalFilename),
+      uploadToBlob(watermarked, watermarkedFilename),
     ]);
-    console.log('[Upload] Filecoin upload complete');
+    console.log('[Upload] Blob upload complete');
 
-    const encryptedKey = encryptWithMasterKey(keyToHex(encryptionKey), masterKey);
+    console.log('[Upload] Checking for existing username...');
+    const [existingUsername] = await db
+      .select()
+      .from(usernames)
+      .where(eq(usernames.userAddress, data.photographerAddress.toLowerCase()))
+      .limit(1);
 
     console.log('[Upload] Saving to database...');
     const [image] = await db
       .insert(images)
       .values({
-        encryptedCid: encryptedResult.pieceCid,
-        watermarkedCid: watermarkedResult.pieceCid,
-        encryptionKey: encryptedKey,
+        originalBlobUrl: originalResult.url,
+        watermarkedBlobUrl: watermarkedResult.url,
         photographerAddress: data.photographerAddress,
+        photographerUsername: existingUsername?.username || null,
         title: data.title,
         description: data.description,
         tags: data.tags,
@@ -136,8 +134,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       id: image.id,
-      encryptedCid: encryptedResult.pieceCid,
-      watermarkedCid: watermarkedResult.pieceCid,
+      originalBlobUrl: originalResult.url,
+      watermarkedBlobUrl: watermarkedResult.url,
+      hasUsername: !!existingUsername,
+      isFirstUpload: !existingUsername,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Upload failed';

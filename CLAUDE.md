@@ -1,5 +1,12 @@
 # Claude Code Guidelines
 
+## Project Documentation
+
+- **docs/TECHNICAL_SPEC.md** - Primary technical reference (architecture, schemas, implementation details)
+- **docs/TASKS.md** - Task tracking and development workflow
+- **docs/STYLE_GUIDE.md** - UI/UX design system and visual guidelines
+- **docs/VALUE_PROPOSITION.md** - Product value proposition and x402 justification
+
 ## Code Principles
 
 ### DRY (Don't Repeat Yourself)
@@ -75,8 +82,8 @@ Each commit should represent one logical change. If you need "and" in your commi
 ### Conventional Commits
 Use prefixes: `feat:`, `fix:`, `refactor:`, `test:`, `docs:`, `chore:`
 
-### Short Messages
-Keep commit messages concise. The diff tells the "what", the message should tell the "why".
+### Concise Messages
+Keep commit messages short and to the point. No co-authors, no generated-by footers. One line when possible.
 
 ## Code Review
 

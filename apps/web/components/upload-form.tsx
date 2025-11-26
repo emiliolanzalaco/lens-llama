@@ -1,14 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { GradientAIButton } from '@/components/ui/ai-button';
 import { generateDescription } from '@/app/actions/generate-description';
+import { FileDropzone } from '@/components/ui/file-dropzone';
+import { FormField } from '@/components/ui/form-field';
+import { UsernameClaimModal } from '@/components/username-claim-modal';
+
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 const uploadSchema = z.object({
   title: z.string().min(1, 'Title is required'),
@@ -21,6 +26,7 @@ const uploadSchema = z.object({
 });
 
 type FormErrors = {
+  file?: string;
   title?: string;
   description?: string;
   tags?: string;
@@ -44,12 +50,14 @@ interface UploadFormProps {
 export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadFormProps) {
   const router = useRouter();
   const { walletAddress } = useAuth();
-
+  const [preview, setPreview] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [showUsernameModal, setShowUsernameModal] = useState(false);
+  const [pendingUpload, setPendingUpload] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -68,28 +76,27 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
     return null;
   };
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
-    const error = validateFile(selectedFile);
-    if (error) {
-      setErrors((prev) => ({ ...prev, file: error }));
-      return;
-    }
+  // const handleFileSelect = useCallback((selectedFile: File) => {
+  //   const error = validateFile(selectedFile);
+  //   if (error) {
+  //     setErrors((prev) => ({ ...prev, file: error }));
+  //     return;
+  //   }
 
-    setFile(selectedFile);
-    setErrors((prev) => ({ ...prev, file: undefined }));
+  //   setErrors((prev) => ({ ...prev, file: undefined }));
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
-  }, []);
+  //   const reader = new FileReader();
+  //   reader.onload = (e) => {
+  //     setPreview(e.target?.result as string);
+  //   };
+  //   reader.readAsDataURL(selectedFile);
+  // }, []);
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    onChange({ ...data, [name]: value });
+    setFormData((prev) => ({ ...prev, [name]: value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -99,13 +106,55 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
       // Create a temporary URL for the file to send to the server (or handle upload there)
       // For the skeleton/mock, we just pass a string. In reality, we might need to upload to blob storage first
       // or send the file content. For now, we'll simulate it.
-      const imageUrl = URL.createObjectURL(file);
+      const imageUrl = URL.createObjectURL(file!);
       const description = await generateDescription(imageUrl);
       onChange({ ...data, description });
     } catch (err) {
       console.error('Failed to generate description:', err);
     } finally {
       setIsGeneratingAI(false);
+    }
+  };
+
+  const performUpload = async () => {
+    if (!file || !walletAddress) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', file);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('tags', formData.tags);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('photographerAddress', walletAddress);
+
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => Math.min(prev + 10, 90));
+      }, 200);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      clearInterval(progressInterval);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Upload failed');
+      }
+
+      setUploadProgress(100);
+      setTimeout(() => router.push('/'), 500);
+    } catch (error) {
+      setSubmitError(
+        error instanceof Error ? error.message : 'Upload failed'
+      );
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
@@ -134,49 +183,34 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
       return;
     }
 
-    setIsUploading(true);
-    setUploadProgress(0);
-
+    // Check if user already has a username
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('title', data.title);
-      formDataToSend.append('description', data.description);
-      formDataToSend.append('tags', data.tags);
-      formDataToSend.append('price', data.price);
-      formDataToSend.append('photographerAddress', walletAddress);
-
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await fetch('/api/upload', {
+      const checkResponse = await fetch('/api/username/check-user', {
         method: 'POST',
-        body: formDataToSend,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userAddress: walletAddress }),
       });
 
-      clearInterval(progressInterval);
+      if (checkResponse.ok) {
+        const { hasUsername } = await checkResponse.json();
 
-      if (!response.ok) {
-        const responseData = await response.json();
-        throw new Error(responseData.error || 'Upload failed');
+        if (!hasUsername) {
+          // First upload, show username modal before uploading
+          setPendingUpload(true);
+          setShowUsernameModal(true);
+          return;
+        }
       }
 
-      setUploadProgress(100);
-      onUploadSuccess();
-
-      // Optional: Redirect if it was the last image, but parent handles flow now.
-      // setTimeout(() => router.push('/'), 500); 
+      // User has username or check failed, proceed with upload
+      await performUpload();
     } catch (error) {
-      setSubmitError(
-        error instanceof Error ? error.message : 'Upload failed'
-      );
-      setIsUploading(false);
-      setUploadProgress(0);
+      // If check fails, proceed with upload anyway
+      await performUpload();
     }
   };
 
-  const handleUsernameSuccess = async (username: string, ensName: string) => {
+  const handleUsernameSuccess = async (username: string) => {
     setShowUsernameModal(false);
     setPendingUpload(false);
 
@@ -236,13 +270,25 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
 
         {isUploading && <ProgressBar progress={uploadProgress} />}
 
-        {submitError && (
-          <p className="text-sm text-red-600">{submitError}</p>
-        )}
+        {
+          submitError && (
+            <p className="text-sm text-red-600">{submitError}</p>
+          )
+        }
 
         <Button type="submit" disabled={isUploading} className="w-full">
           {isUploading ? 'Uploading...' : 'Upload Image'}
         </Button>
-      </form>
-      );
+      </form >
+
+      {showUsernameModal && walletAddress && (
+        <UsernameClaimModal
+          isOpen={showUsernameModal}
+          onClose={() => setShowUsernameModal(false)}
+          userAddress={walletAddress}
+          onSuccess={handleUsernameSuccess}
+        />
+      )}
+    </>
+  );
 }

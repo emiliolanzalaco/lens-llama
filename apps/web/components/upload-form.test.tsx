@@ -34,8 +34,15 @@ describe('UploadForm', () => {
     });
   });
 
+  const defaultProps = {
+    file: new File([''], 'test.jpg', { type: 'image/jpeg' }),
+    data: { title: '', description: '', tags: '', price: '' },
+    onChange: vi.fn(),
+    onUploadSuccess: vi.fn(),
+  };
+
   it('renders all form fields', () => {
-    render(<UploadForm />);
+    render(<UploadForm {...defaultProps} />);
 
     expect(screen.getByText(/^image$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
@@ -46,7 +53,7 @@ describe('UploadForm', () => {
   });
 
   it('shows validation error when title is empty', async () => {
-    const { container } = render(<UploadForm />);
+    const { container } = render(<UploadForm {...defaultProps} />);
 
     // Create and select a file
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
@@ -67,7 +74,7 @@ describe('UploadForm', () => {
   });
 
   it('shows validation error for invalid price', async () => {
-    const { container } = render(<UploadForm />);
+    const { container } = render(<UploadForm {...defaultProps} />);
 
     // Create and select a file
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
@@ -91,7 +98,7 @@ describe('UploadForm', () => {
   });
 
   it('shows error when no file is selected', async () => {
-    render(<UploadForm />);
+    render(<UploadForm {...defaultProps} file={undefined as any} />);
 
     // Fill form without selecting file
     fireEvent.change(screen.getByLabelText(/^title$/i), {
@@ -110,7 +117,7 @@ describe('UploadForm', () => {
   });
 
   it('rejects invalid file types', async () => {
-    const { container } = render(<UploadForm />);
+    const { container } = render(<UploadForm {...defaultProps} />);
 
     // Try to select a PDF file
     const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
@@ -123,7 +130,17 @@ describe('UploadForm', () => {
   });
 
   it('submits form successfully with valid data', async () => {
-    const { container } = render(<UploadForm />);
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ hasUsername: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ id: 'test-id' }),
+      });
+
+    const { container } = render(<UploadForm {...defaultProps} />);
 
     // Create and select a file
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
@@ -147,12 +164,17 @@ describe('UploadForm', () => {
   });
 
   it('shows error message when upload fails', async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: false,
-      json: async () => ({ error: 'Upload failed' }),
-    });
+    mockFetch
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ hasUsername: true }),
+      })
+      .mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: 'Upload failed' }),
+      });
 
-    const { container } = render(<UploadForm />);
+    const { container } = render(<UploadForm {...defaultProps} />);
 
     // Create and select a file
     const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });

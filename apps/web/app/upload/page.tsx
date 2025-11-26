@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { UploadForm, type UploadFormData } from '@/components/upload-form';
 import { ImageCarousel, type CarouselImage } from '@/components/image-carousel';
 import { FileDropzone } from '@/components/ui/file-dropzone';
-import { Plus } from 'lucide-react';
 
 interface UploadItem {
   id: string;
@@ -122,7 +121,7 @@ export default function UploadPage() {
         <div className="mx-auto max-w-xl">
           <FileDropzone
             onFileSelect={handleFileSelect}
-            error={error}
+            error={error || undefined}
           />
         </div>
       </div>

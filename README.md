@@ -34,3 +34,19 @@ The following commands have been verified to pass:
 
 - `pnpm dev`: To start the development environment
 - `pnpm build`: To build the project
+
+## Deployments
+
+### Base Sepolia (Testnet)
+
+| Contract | Address |
+|----------|---------|
+| RevenueDistributor | [`0x9FBa4d8090E825d311982273D1bb77f5c46C9afa`](https://sepolia.basescan.org/address/0x9FBa4d8090E825d311982273D1bb77f5c46C9afa#code) |
+
+**Configuration:**
+- USDC: `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
+- Treasury: `0xd08316c7c3bbe0f8d1ca9bf12bec3b351c737100`
+
+### Base Mainnet
+
+Not yet deployed.

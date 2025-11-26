@@ -7,15 +7,16 @@ import { cn } from '@/lib/utils';
 interface FileDropzoneProps {
   onFileSelect: (file: File) => void;
   accept?: string;
-  error?: string | null;
   className?: string;
+  preview?: string | null;
+  error?: string;
 }
 
 export function FileDropzone({
   onFileSelect,
   accept = 'image/jpeg,image/png,image/webp',
-  error,
   className,
+  error,
 }: FileDropzoneProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -96,29 +97,31 @@ export function FileDropzone({
           className="hidden"
         />
       </div>
-      {error && (
-        <p className="mt-3 text-center text-sm font-medium text-red-600 animate-in fade-in slide-in-from-top-1">
-          {error}
-        </p>
-      )}
-    </div>
+      {
+        error && (
+          <p className="mt-3 text-center text-sm font-medium text-red-600 animate-in fade-in slide-in-from-top-1">
+            {error}
+          </p>
+        )
+      }
+    </div >
   );
 }
 
-const DOTS = Array.from({ length: 120 }).map((_, i) => {
-  // Create a grid of 12x10
-  const col = i % 12;
-  const row = Math.floor(i / 12);
+const DOTS = Array.from({ length: 500 }).map((_, i) => {
+  // Create a grid of 25x20
+  const col = i % 25;
+  const row = Math.floor(i / 25);
 
   // Deterministic perturbation
   const dx = (Math.sin(i * 13.37) * 4);
   const dy = (Math.cos(i * 12.34) * 4);
 
   return {
-    left: `${(col * 8.3) + 2 + dx}%`,
-    top: `${(row * 10) + 5 + dy}%`,
+    left: `${(col * 4) + dx}%`,
+    top: `${(row * 5) + dy}%`,
     size: (Math.abs(Math.sin(i * 1.23)) * 3) + 2 + 'px', // 2-5px
-    opacity: (Math.abs(Math.cos(i * 2.34)) * 0.5) + 0.4, // Higher base opacity
+    opacity: (Math.abs(Math.cos(i * 2.34)) * 0.5) + 0.4,
   };
 });
 
@@ -134,7 +137,7 @@ function DotBackground({ isDragging }: { isDragging: boolean }) {
         WebkitMaskImage: 'radial-gradient(circle at center, transparent 35%, black 60%)'
       }}
     >
-      <div className="absolute inset-0 transition-transform duration-[20s] ease-linear group-hover:animate-[spin_20s_linear_infinite]">
+      <div className="absolute -inset-[100%] w-[300%] h-[300%] transition-transform duration-[20s] ease-linear group-hover:animate-[spin_20s_linear_infinite]">
         {DOTS.map((dot, i) => (
           <div
             key={i}
