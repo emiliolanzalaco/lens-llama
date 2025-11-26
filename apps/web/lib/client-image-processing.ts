@@ -13,31 +13,25 @@ export interface ImageDimensions {
 
 /**
  * Get image dimensions from a File
+ * Handles EXIF orientation by using createImageBitmap
  */
 export async function getImageDimensions(file: File): Promise<ImageDimensions> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
+  try {
+    // createImageBitmap respects EXIF orientation
+    const bitmap = await createImageBitmap(file, {
+      imageOrientation: 'from-image',
+    });
 
-    const cleanup = () => {
-      URL.revokeObjectURL(objectUrl);
-      img.onload = null;
-      img.onerror = null;
+    const dimensions = {
+      width: bitmap.width,
+      height: bitmap.height,
     };
 
-    img.onload = () => {
-      cleanup();
-      resolve({
-        width: img.naturalWidth,
-        height: img.naturalHeight,
-      });
-    };
-    img.onerror = () => {
-      cleanup();
-      reject(new Error('Failed to load image'));
-    };
-    img.src = objectUrl;
-  });
+    bitmap.close();
+    return dimensions;
+  } catch (error) {
+    throw new Error('Failed to load image');
+  }
 }
 
 /**
@@ -100,26 +94,15 @@ export async function createWatermarkedPreview(
 
 /**
  * Helper to load an image from a File
+ * Handles EXIF orientation by using createImageBitmap
  */
-function loadImage(file: File): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    const cleanup = () => {
-      URL.revokeObjectURL(objectUrl);
-      img.onload = null;
-      img.onerror = null;
-    };
-
-    img.onload = () => {
-      cleanup();
-      resolve(img);
-    };
-    img.onerror = () => {
-      cleanup();
-      reject(new Error('Failed to load image'));
-    };
-    img.src = objectUrl;
-  });
+async function loadImage(file: File): Promise<ImageBitmap> {
+  try {
+    // createImageBitmap respects EXIF orientation
+    return await createImageBitmap(file, {
+      imageOrientation: 'from-image',
+    });
+  } catch (error) {
+    throw new Error('Failed to load image');
+  }
 }
