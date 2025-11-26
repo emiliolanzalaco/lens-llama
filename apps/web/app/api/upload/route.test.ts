@@ -1,6 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
 
+// Test constants
+const TEST_WALLET_ADDRESS = '0x1234567890123456789012345678901234567890';
+const VALID_METADATA = {
+  type: 'original' as const,
+  title: 'Test Image',
+  description: null,
+  tags: 'nature',
+  width: 1920,
+  height: 1080,
+  price: '10.00',
+  photographerAddress: TEST_WALLET_ADDRESS,
+};
+
 // Mock dependencies
 vi.mock('@vercel/blob/client', () => ({
   handleUpload: vi.fn(),
@@ -25,8 +38,25 @@ vi.mock('@lens-llama/database', () => ({
   usernames: {},
 }));
 
-
 import { handleUpload } from '@vercel/blob/client';
+
+// Test helpers
+const createRequest = (body: object = {}) => {
+  return new Request('http://localhost/api/upload', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+};
+
+const setupHandleUploadMock = () => {
+  let capturedCallback: any;
+  vi.mocked(handleUpload).mockImplementation(async (options: any) => {
+    capturedCallback = options.onBeforeGenerateToken;
+    return { type: 'blob.generate-client-token', clientToken: 'test' };
+  });
+  return () => capturedCallback;
+};
 
 describe('POST /api/upload', () => {
   beforeEach(() => {
@@ -34,19 +64,17 @@ describe('POST /api/upload', () => {
   });
 
   it('calls handleUpload with correct configuration', async () => {
+    // Arrange
     vi.mocked(handleUpload).mockResolvedValue({
       type: 'blob.generate-client-token',
       clientToken: 'test-token',
     } as any);
+    const request = createRequest({ type: 'blob.generate-client-token' });
 
-    const request = new Request('http://localhost/api/upload', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'blob.generate-client-token' }),
-    });
-
+    // Act
     await POST(request);
 
+    // Assert
     expect(handleUpload).toHaveBeenCalledWith(
       expect.objectContaining({
         body: expect.any(Object),
@@ -58,49 +86,30 @@ describe('POST /api/upload', () => {
   });
 
   it('returns error for invalid JSON', async () => {
+    // Arrange
     const request = new Request('http://localhost/api/upload', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json',
     });
 
+    // Act
     const response = await POST(request);
+
+    // Assert
     expect(response.status).toBe(400);
   });
 
   describe('onBeforeGenerateToken', () => {
     it('validates metadata and returns upload config', async () => {
-      let capturedOnBeforeGenerateToken: any;
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
 
-      vi.mocked(handleUpload).mockImplementation(async (options: any) => {
-        capturedOnBeforeGenerateToken = options.onBeforeGenerateToken;
-        return { type: 'blob.generate-client-token', clientToken: 'test' };
-      });
+      // Act
+      const result = await getCallback()('test.jpg', JSON.stringify(VALID_METADATA));
 
-      const request = new Request('http://localhost/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      await POST(request);
-
-      const metadata = {
-        type: 'original',
-        title: 'Test Image',
-        description: null,
-        tags: 'nature',
-        width: 1920,
-        height: 1080,
-        price: '10.00',
-        photographerAddress: '0x1234567890123456789012345678901234567890',
-      };
-
-      const result = await capturedOnBeforeGenerateToken(
-        'test.jpg',
-        JSON.stringify(metadata)
-      );
-
+      // Assert
       expect(result).toEqual({
         allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
         maximumSizeInBytes: 50 * 1024 * 1024,
@@ -109,87 +118,37 @@ describe('POST /api/upload', () => {
     });
 
     it('throws error when metadata is missing', async () => {
-      let capturedOnBeforeGenerateToken: any;
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
 
-      vi.mocked(handleUpload).mockImplementation(async (options: any) => {
-        capturedOnBeforeGenerateToken = options.onBeforeGenerateToken;
-        return { type: 'blob.generate-client-token', clientToken: 'test' };
-      });
-
-      const request = new Request('http://localhost/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      await POST(request);
-
+      // Act & Assert
       await expect(
-        capturedOnBeforeGenerateToken('test.jpg', null)
+        getCallback()('test.jpg', null)
       ).rejects.toThrow('Missing upload metadata');
     });
 
     it('throws error for invalid metadata', async () => {
-      let capturedOnBeforeGenerateToken: any;
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+      const invalidMetadata = { ...VALID_METADATA, title: '' };
 
-      vi.mocked(handleUpload).mockImplementation(async (options: any) => {
-        capturedOnBeforeGenerateToken = options.onBeforeGenerateToken;
-        return { type: 'blob.generate-client-token', clientToken: 'test' };
-      });
-
-      const request = new Request('http://localhost/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      await POST(request);
-
-      const invalidMetadata = {
-        type: 'original',
-        title: '', // Empty title
-        description: null,
-        tags: '',
-        price: '10.00',
-        photographerAddress: '0x1234567890123456789012345678901234567890',
-        width: 1920,
-        height: 1080,
-      };
-
+      // Act & Assert
       await expect(
-        capturedOnBeforeGenerateToken('test.jpg', JSON.stringify(invalidMetadata))
+        getCallback()('test.jpg', JSON.stringify(invalidMetadata))
       ).rejects.toThrow('Title is required');
     });
 
     it('throws error for invalid price', async () => {
-      let capturedOnBeforeGenerateToken: any;
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+      const invalidMetadata = { ...VALID_METADATA, price: '-5' };
 
-      vi.mocked(handleUpload).mockImplementation(async (options: any) => {
-        capturedOnBeforeGenerateToken = options.onBeforeGenerateToken;
-        return { type: 'blob.generate-client-token', clientToken: 'test' };
-      });
-
-      const request = new Request('http://localhost/api/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      await POST(request);
-
-      const invalidMetadata = {
-        type: 'original',
-        title: 'Test',
-        description: null,
-        tags: '',
-        price: '-5',
-        photographerAddress: '0x1234567890123456789012345678901234567890',
-        width: 1920,
-        height: 1080,
-      };
-
+      // Act & Assert
       await expect(
-        capturedOnBeforeGenerateToken('test.jpg', JSON.stringify(invalidMetadata))
+        getCallback()('test.jpg', JSON.stringify(invalidMetadata))
       ).rejects.toThrow('Price must be greater than zero');
     });
   });
