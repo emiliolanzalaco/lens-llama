@@ -1,35 +1,9 @@
 import { NextResponse } from 'next/server';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
-import { z } from 'zod';
+import { metadataSchema } from '@/lib/upload-validation';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-
-const metadataSchema = z.object({
-  type: z.enum(['original', 'watermarked']),
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().nullable(),
-  tags: z.string().transform((val) =>
-    val ? val.split(',').map((t) => t.trim()).filter(Boolean) : []
-  ),
-  price: z.string().transform((val, ctx) => {
-    const num = parseFloat(val);
-    if (isNaN(num) || num <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Price must be a positive number',
-      });
-      return z.NEVER;
-    }
-    return num;
-  }),
-  photographerAddress: z.string().regex(
-    /^0x[a-fA-F0-9]{40}$/,
-    'Invalid Ethereum address'
-  ),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
-});
 
 // Upload handler - validates metadata and generates upload tokens
 export async function POST(request: Request): Promise<Response> {
@@ -66,7 +40,8 @@ export async function POST(request: Request): Promise<Response> {
         };
       },
       onUploadCompleted: async () => {
-        // No-op: Client will call /api/upload/complete after both uploads finish
+        // No-op: Each file's completion is handled separately
+        // Client calls /api/upload/complete once both uploads finish
       },
     });
 

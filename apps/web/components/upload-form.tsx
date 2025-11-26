@@ -19,6 +19,15 @@ import {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
+// Upload progress stages
+const PROGRESS_WATERMARK_START = 10;
+const PROGRESS_UPLOAD_START = 20;
+const PROGRESS_ORIGINAL_START = 20;
+const PROGRESS_ORIGINAL_WEIGHT = 0.35;
+const PROGRESS_WATERMARKED_START = 55;
+const PROGRESS_WATERMARKED_WEIGHT = 0.35;
+const PROGRESS_COMPLETE_START = 90;
+
 const uploadSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -36,6 +45,23 @@ type FormErrors = {
   tags?: string;
   price?: string;
 };
+
+type UploadType = 'original' | 'watermarked';
+
+function createClientPayload(
+  metadata: {
+    title: string;
+    description: string | null;
+    tags: string;
+    price: string;
+    photographerAddress: string;
+    width: number;
+    height: number;
+  },
+  type: UploadType
+): string {
+  return JSON.stringify({ ...metadata, type });
+}
 
 export function UploadForm() {
   const router = useRouter();
@@ -116,7 +142,7 @@ export function UploadForm() {
 
     try {
       // Create watermarked preview
-      setUploadProgress(10);
+      setUploadProgress(PROGRESS_WATERMARK_START);
       const watermarkedFile = await createWatermarkedPreview(file, dimensions);
 
       // Prepare metadata to send with the upload
@@ -130,30 +156,30 @@ export function UploadForm() {
         height: dimensions.height,
       };
 
-      setUploadProgress(20);
+      setUploadProgress(PROGRESS_UPLOAD_START);
 
       // Upload original and watermarked files to Vercel Blob from the client
       const [originalBlob, watermarkedBlob] = await Promise.all([
         upload(file.name, file, {
           access: 'public',
           handleUploadUrl: '/api/upload',
-          clientPayload: JSON.stringify({ ...metadata, type: 'original' }),
+          clientPayload: createClientPayload(metadata, 'original'),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(20 + percentage * 0.35); // 20-55%
+            setUploadProgress(PROGRESS_ORIGINAL_START + percentage * PROGRESS_ORIGINAL_WEIGHT);
           },
         }),
         upload(watermarkedFile.name, watermarkedFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
-          clientPayload: JSON.stringify({ ...metadata, type: 'watermarked' }),
+          clientPayload: createClientPayload(metadata, 'watermarked'),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(55 + percentage * 0.35); // 55-90%
+            setUploadProgress(PROGRESS_WATERMARKED_START + percentage * PROGRESS_WATERMARKED_WEIGHT);
           },
         }),
       ]);
 
       // Save to database
-      setUploadProgress(90);
+      setUploadProgress(PROGRESS_COMPLETE_START);
       const completeResponse = await fetch('/api/upload/complete', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

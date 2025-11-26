@@ -18,14 +18,26 @@ export interface ImageDimensions {
 export async function getImageDimensions(file: File): Promise<ImageDimensions> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl);
+      img.onload = null;
+      img.onerror = null;
+    };
+
     img.onload = () => {
+      cleanup();
       resolve({
         width: img.naturalWidth,
         height: img.naturalHeight,
       });
     };
-    img.onerror = () => reject(new Error('Failed to load image'));
-    img.src = URL.createObjectURL(file);
+    img.onerror = () => {
+      cleanup();
+      reject(new Error('Failed to load image'));
+    };
+    img.src = objectUrl;
   });
 }
 
@@ -99,14 +111,22 @@ export async function createWatermarkedPreview(
 function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl);
+      img.onload = null;
+      img.onerror = null;
+    };
+
     img.onload = () => {
-      URL.revokeObjectURL(img.src);
+      cleanup();
       resolve(img);
     };
     img.onerror = () => {
-      URL.revokeObjectURL(img.src);
+      cleanup();
       reject(new Error('Failed to load image'));
     };
-    img.src = URL.createObjectURL(file);
+    img.src = objectUrl;
   });
 }
