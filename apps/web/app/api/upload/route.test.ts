@@ -19,6 +19,19 @@ vi.mock('@vercel/blob/client', () => ({
   handleUpload: vi.fn(),
 }));
 
+// Mock api-auth to bypass authentication in tests
+vi.mock('@/lib/api-auth', () => ({
+  withAuth: (handler: any) => async (req: Request, ...args: any[]) => {
+    // Mock user object for tests
+    const mockUser = {
+      userId: 'test-user-id',
+      walletAddress: TEST_WALLET_ADDRESS,
+    };
+    return handler(req, mockUser, ...args);
+  },
+  doWalletAddressesMatch: vi.fn().mockReturnValue(true),
+}));
+
 vi.mock('@lens-llama/database', () => ({
   db: {
     insert: vi.fn().mockReturnValue({
@@ -41,10 +54,13 @@ vi.mock('@lens-llama/database', () => ({
 import { handleUpload } from '@vercel/blob/client';
 
 // Test helpers
-const createRequest = (body: object = {}) => {
+const createRequest = (body: object = {}, token = 'test-token') => {
   return new Request('http://localhost/api/upload', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
     body: JSON.stringify(body),
   });
 };

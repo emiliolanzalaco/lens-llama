@@ -1,7 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
 
+// Test constants
+const TEST_WALLET_ADDRESS = '0x1234567890123456789012345678901234567890';
+
 // Mock dependencies
+vi.mock('@/lib/api-auth', () => ({
+  withAuth: (handler: any) => async (req: Request, ...args: any[]) => {
+    const mockUser = {
+      userId: 'test-user-id',
+      walletAddress: TEST_WALLET_ADDRESS,
+    };
+    return handler(req, mockUser, ...args);
+  },
+  doWalletAddressesMatch: vi.fn().mockReturnValue(true),
+}));
+
 vi.mock('@lens-llama/database', () => ({
   db: {
     insert: vi.fn().mockReturnValue({

@@ -2,11 +2,20 @@ import { NextResponse } from 'next/server';
 import { db, images, usernames } from '@lens-llama/database';
 import { eq } from 'drizzle-orm';
 import { completeUploadSchema } from '@/lib/upload-validation';
+import { withAuth, doWalletAddressesMatch } from '@/lib/api-auth';
 
-export async function POST(request: Request): Promise<Response> {
+export const POST = withAuth(async (request, user): Promise<Response> => {
   try {
     const body = await request.json();
     const data = completeUploadSchema.parse(body);
+
+    // Verify the photographer address matches the authenticated user's wallet
+    if (!doWalletAddressesMatch(user, data.photographerAddress)) {
+      return NextResponse.json(
+        { error: 'Photographer address does not match authenticated wallet' },
+        { status: 403 }
+      );
+    }
 
     // Check for existing username
     const [existingUsername] = await db
@@ -37,4 +46,4 @@ export async function POST(request: Request): Promise<Response> {
     const message = error instanceof Error ? error.message : 'Failed to complete upload';
     return NextResponse.json({ error: message }, { status: 400 });
   }
-}
+});

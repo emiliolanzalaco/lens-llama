@@ -65,7 +65,7 @@ function createClientPayload(
 
 export function UploadForm() {
   const router = useRouter();
-  const { walletAddress } = useAuth();
+  const { walletAddress, getAccessToken } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -144,6 +144,12 @@ export function UploadForm() {
     setUploadProgress(0);
 
     try {
+      // Get access token for authentication
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error('Failed to get access token');
+      }
+
       // Create watermarked preview
       setUploadProgress(PROGRESS_WATERMARK_START);
       const watermarkedFile = await createWatermarkedPreview(file, dimensions);
@@ -167,6 +173,9 @@ export function UploadForm() {
           access: 'public',
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'original'),
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
           onUploadProgress: ({ percentage }) => {
             const range = PROGRESS_ORIGINAL_END - PROGRESS_ORIGINAL_START;
             setUploadProgress(PROGRESS_ORIGINAL_START + (percentage / 100) * range);
@@ -176,6 +185,9 @@ export function UploadForm() {
           access: 'public',
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'watermarked'),
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
           onUploadProgress: ({ percentage }) => {
             const range = PROGRESS_WATERMARKED_END - PROGRESS_WATERMARKED_START;
             setUploadProgress(PROGRESS_WATERMARKED_START + (percentage / 100) * range);
@@ -187,7 +199,10 @@ export function UploadForm() {
       setUploadProgress(PROGRESS_COMPLETE_START);
       const completeResponse = await fetch('/api/upload/complete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
         body: JSON.stringify({
           originalUrl: originalBlob.url,
           watermarkedUrl: watermarkedBlob.url,

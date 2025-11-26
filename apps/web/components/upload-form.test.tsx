@@ -22,6 +22,7 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/hooks/use-auth', () => ({
   useAuth: () => ({
     walletAddress: TEST_WALLET_ADDRESS,
+    getAccessToken: vi.fn().mockResolvedValue('test-access-token'),
   }),
 }));
 
