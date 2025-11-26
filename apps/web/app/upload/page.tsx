@@ -99,7 +99,7 @@ export default function UploadPage() {
         file,
         previewUrl,
         data: {
-          title: file.name.split('.')[0],
+          title: '',
           description: '',
           tags: '',
           price: '',
@@ -181,7 +181,10 @@ export default function UploadPage() {
   // Initial Empty State
   if (items.length === 0) {
     return (
-      <div className="px-6 py-12 md:px-12">
+      <div className="flex flex-col items-center justify-center px-6 py-12 md:px-12">
+        <h1 className="mb-4 text-3xl font-medium text-neutral-950 mb-24">
+          Capture, share, and inspire with your unique vision.
+        </h1>
         <div className="mx-auto max-w-xl">
           <FileDropzone
             onFilesSelect={handleFileSelect}
@@ -196,22 +199,35 @@ export default function UploadPage() {
     <div className="flex h-[calc(100vh-64px)] flex-col bg-white">
       <div className="flex flex-1 flex-col overflow-hidden md:flex-row">
         {/* Left Column - Preview (75%) */}
-        <div className="relative flex items-center justify-center bg-neutral-100 p-8 md:w-3/4">
+        <div className="relative flex items-center justify-center p-8 md:w-3/4">
           {selectedItem ? (
-            <div className="relative h-full w-full">
-              <img
-                src={selectedItem.previewUrl}
-                alt={selectedItem.data.title}
-                className="h-full w-full object-contain"
+            <>
+              <ImageCarousel
+                images={items.map(item => ({ id: item.id, url: item.previewUrl }))}
+                selectedId={selectedId}
+                onSelect={setSelectedId}
+                onAdd={handleAddImage}
+                onRemove={(id) => {
+                  setItems(prev => prev.filter(i => i.id !== id));
+                  if (selectedId === id) setSelectedId(null);
+                }}
               />
-            </div>
+
+              <div className="relative h-full w-full">
+                <img
+                  src={selectedItem.previewUrl}
+                  alt={selectedItem.data.title}
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </>
           ) : (
             <div className="text-neutral-400">Select an image to edit</div>
           )}
         </div>
 
         {/* Right Column - Form (25%) */}
-        <div className="flex flex-col overflow-y-auto border-l border-neutral-200 bg-white p-6 md:w-1/4">
+        <div className="flex flex-col overflow-y-auto bg-white p-6 md:w-1/4">
           {selectedItem && (
             <UploadForm
               key={selectedItem.id} // Force re-mount on switch to reset internal form state if any
@@ -223,18 +239,6 @@ export default function UploadPage() {
           )}
         </div>
       </div>
-
-      {/* Bottom Carousel */}
-      <ImageCarousel
-        images={items.map(item => ({ id: item.id, url: item.previewUrl }))}
-        selectedId={selectedId}
-        onSelect={setSelectedId}
-        onAdd={handleAddImage}
-        onRemove={(id) => {
-          setItems(prev => prev.filter(i => i.id !== id));
-          if (selectedId === id) setSelectedId(null);
-        }}
-      />
     </div>
   );
 }

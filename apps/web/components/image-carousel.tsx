@@ -27,15 +27,15 @@ export function ImageCarousel({
     if (images.length === 0) return null;
 
     return (
-        <div className="flex w-full items-center gap-4 overflow-x-auto border-t border-neutral-200 bg-white p-4">
-            <div className="flex gap-4">
+        <div className="flex h-full items-start gap-4 overflow-x-auto border-neutral-200 p-4">
+            <div className="flex flex-col gap-4">
                 {images.map((image) => (
                     <div
                         key={image.id}
                         className={cn(
                             "relative h-20 w-20 cursor-pointer overflow-hidden rounded-md border-2 transition-all hover:opacity-90",
                             selectedId === image.id
-                                ? "border-neutral-950 ring-2 ring-neutral-950 ring-offset-2"
+                                ? "border-green-500 ring-2 ring-green-500"
                                 : "border-transparent opacity-70 hover:opacity-100"
                         )}
                         onClick={() => onSelect(image.id)}
