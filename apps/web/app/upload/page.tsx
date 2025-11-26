@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { UploadForm, type UploadFormData } from '@/components/upload-form';
@@ -16,6 +16,8 @@ interface UploadItem {
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const MAX_FILES = 5;
+const STORAGE_KEY = 'lens-llama-upload-form-data';
 
 export default function UploadPage() {
   const { ready, authenticated, login } = useAuth();
@@ -24,36 +26,97 @@ export default function UploadPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleFileSelect = useCallback((file: File) => {
-    // Validate
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      setError('Invalid file type. Allowed: JPEG, PNG, WebP');
-      return;
+  // Load form data from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const savedData = JSON.parse(saved) as Record<string, UploadFormData>;
+        // Update items with saved form data
+        setItems((prev) =>
+          prev.map((item) => ({
+            ...item,
+            data: savedData[item.id] || item.data,
+          }))
+        );
+      }
+    } catch (error) {
+      console.error('Failed to load form data from localStorage:', error);
     }
-    if (file.size > MAX_FILE_SIZE) {
-      setError(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
-      return;
-    }
-
-    const id = crypto.randomUUID();
-    const previewUrl = URL.createObjectURL(file);
-
-    const newItem: UploadItem = {
-      id,
-      file,
-      previewUrl,
-      data: {
-        title: file.name.split('.')[0],
-        description: '',
-        tags: '',
-        price: '',
-      },
-    };
-
-    setItems((prev) => [...prev, newItem]);
-    setSelectedId(id);
-    setError(null);
   }, []);
+
+  // Save form data to localStorage whenever items change
+  useEffect(() => {
+    if (items.length > 0) {
+      try {
+        const formDataMap: Record<string, UploadFormData> = {};
+        items.forEach((item) => {
+          formDataMap[item.id] = item.data;
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(formDataMap));
+      } catch (error) {
+        console.error('Failed to save form data to localStorage:', error);
+      }
+    } else {
+      // Clear localStorage when no items
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [items]);
+
+  const handleFileSelect = useCallback((files: File[]) => {
+    const newItems: UploadItem[] = [];
+    let hasError = false;
+
+    // Check if adding these files would exceed the limit
+    const currentCount = items.length;
+    const totalCount = currentCount + files.length;
+
+    if (totalCount > MAX_FILES) {
+      setError(`Maximum ${MAX_FILES} images allowed. You can upload ${MAX_FILES - currentCount} more.`);
+      hasError = true;
+      // Only process files up to the limit
+      files = files.slice(0, MAX_FILES - currentCount);
+    }
+
+    for (const file of files) {
+      // Validate
+      if (!ALLOWED_TYPES.includes(file.type)) {
+        setError('Invalid file type. Allowed: JPEG, PNG, WebP');
+        hasError = true;
+        continue;
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        setError(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
+        hasError = true;
+        continue;
+      }
+
+      const id = crypto.randomUUID();
+      const previewUrl = URL.createObjectURL(file);
+
+      const newItem: UploadItem = {
+        id,
+        file,
+        previewUrl,
+        data: {
+          title: file.name.split('.')[0],
+          description: '',
+          tags: '',
+          price: '',
+        },
+      };
+
+      newItems.push(newItem);
+    }
+
+    if (newItems.length > 0) {
+      setItems((prev) => [...prev, ...newItems]);
+      setSelectedId(newItems[0].id);
+      if (!hasError) {
+        setError(null);
+      }
+    }
+  }, [items.length]);
 
   const handleFormDataChange = (id: string, newData: UploadFormData) => {
     setItems((prev) =>
@@ -83,9 +146,10 @@ export default function UploadPage() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = ALLOWED_TYPES.join(',');
+    input.multiple = true;
     input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) handleFileSelect(file);
+      const files = Array.from((e.target as HTMLInputElement).files || []);
+      if (files.length > 0) handleFileSelect(files);
     };
     input.click();
   };
@@ -120,7 +184,7 @@ export default function UploadPage() {
       <div className="px-6 py-12 md:px-12">
         <div className="mx-auto max-w-xl">
           <FileDropzone
-            onFileSelect={handleFileSelect}
+            onFilesSelect={handleFileSelect}
             error={error || undefined}
           />
         </div>
@@ -148,13 +212,6 @@ export default function UploadPage() {
 
         {/* Right Column - Form (25%) */}
         <div className="flex flex-col overflow-y-auto border-l border-neutral-200 bg-white p-6 md:w-1/4">
-          <div className="mb-6">
-            <h2 className="text-xl font-medium text-neutral-950">Edit Details</h2>
-            <p className="text-sm text-neutral-500">
-              {items.length} image{items.length !== 1 ? 's' : ''} selected
-            </p>
-          </div>
-
           {selectedItem && (
             <UploadForm
               key={selectedItem.id} // Force re-mount on switch to reset internal form state if any

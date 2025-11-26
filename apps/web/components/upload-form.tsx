@@ -21,8 +21,8 @@ const uploadSchema = z.object({
   tags: z.string().optional(),
   price: z.string().refine((val) => {
     const num = parseFloat(val);
-    return !isNaN(num) && num > 0;
-  }, 'Price must be a positive number'),
+    return !isNaN(num) && num > 0.01;
+  }, 'Price must be greater than 0.01'),
 });
 
 type FormErrors = {
@@ -59,13 +59,6 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
   const [pendingUpload, setPendingUpload] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    tags: '',
-    price: '',
-  });
-
   const validateFile = (file: File): string | null => {
     if (!ALLOWED_TYPES.includes(file.type)) {
       return 'Invalid file type. Allowed: JPEG, PNG, WebP';
@@ -96,7 +89,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    onChange({ ...data, [name]: value });
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
@@ -125,10 +118,10 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
     try {
       const formDataToSend = new FormData();
       formDataToSend.append('file', file);
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tags', formData.tags);
-      formDataToSend.append('price', formData.price);
+      formDataToSend.append('title', data.title);
+      formDataToSend.append('description', data.description);
+      formDataToSend.append('tags', data.tags);
+      formDataToSend.append('price', data.price);
       formDataToSend.append('photographerAddress', walletAddress);
 
       const progressInterval = setInterval(() => {
@@ -147,6 +140,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
         throw new Error(data.error || 'Upload failed');
       }
 
+      // Small delay to show 100% before redirect
       setUploadProgress(100);
       setTimeout(() => router.push('/'), 500);
     } catch (error) {
@@ -167,7 +161,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
       return;
     }
 
-    const result = uploadSchema.safeParse(formData);
+    const result = uploadSchema.safeParse(data);
     if (!result.success) {
       const fieldErrors: FormErrors = {};
       result.error.errors.forEach((err) => {
@@ -235,11 +229,6 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
             <label className="text-sm font-medium text-neutral-950">
               Description
             </label>
-            <GradientAIButton
-              onClick={handleGenerateDescription}
-              isLoading={isGeneratingAI}
-              size="sm"
-            />
           </div>
           <textarea
             name="description"
@@ -253,7 +242,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
         <FormField
           label="Tags"
           name="tags"
-          value={formData.tags}
+          value={data.tags}
           onChange={handleInputChange}
           placeholder="nature, landscape, sunset"
           optional
@@ -262,7 +251,7 @@ export function UploadForm({ file, data, onChange, onUploadSuccess }: UploadForm
         <FormField
           label="Price (USDC)"
           name="price"
-          value={formData.price}
+          value={data.price}
           onChange={handleInputChange}
           error={errors.price}
           placeholder="9.99"

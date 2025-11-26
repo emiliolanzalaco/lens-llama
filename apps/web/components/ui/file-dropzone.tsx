@@ -5,7 +5,7 @@ import { Plus, UploadCloud } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface FileDropzoneProps {
-  onFileSelect: (file: File) => void;
+  onFilesSelect: (files: File[]) => void;
   accept?: string;
   className?: string;
   preview?: string | null;
@@ -13,7 +13,7 @@ interface FileDropzoneProps {
 }
 
 export function FileDropzone({
-  onFileSelect,
+  onFilesSelect,
   accept = 'image/jpeg,image/png,image/webp',
   className,
   error,
@@ -26,12 +26,12 @@ export function FileDropzone({
       e.preventDefault();
       setIsDragging(false);
 
-      const droppedFile = e.dataTransfer.files[0];
-      if (droppedFile) {
-        onFileSelect(droppedFile);
+      const droppedFiles = Array.from(e.dataTransfer.files);
+      if (droppedFiles.length > 0) {
+        onFilesSelect(droppedFiles);
       }
     },
-    [onFileSelect]
+    [onFilesSelect]
   );
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -73,10 +73,10 @@ export function FileDropzone({
 
           <div className="space-y-2">
             <p className="text-xl font-medium text-neutral-950">
-              Upload an image
+              Upload images
             </p>
             <p className="text-base text-neutral-500">
-              Drag and drop or click to browse
+              Drag and drop multiple images or click to browse
             </p>
           </div>
 
@@ -90,9 +90,10 @@ export function FileDropzone({
           ref={fileInputRef}
           type="file"
           accept={accept}
+          multiple
           onChange={(e) => {
-            const selectedFile = e.target.files?.[0];
-            if (selectedFile) onFileSelect(selectedFile);
+            const selectedFiles = Array.from(e.target.files || []);
+            if (selectedFiles.length > 0) onFilesSelect(selectedFiles);
           }}
           className="hidden"
         />
