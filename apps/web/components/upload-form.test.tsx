@@ -39,6 +39,8 @@ vi.mock('@/lib/client-image-processing', () => ({
   ),
 }));
 
+import { createWatermarkedPreview } from '@/lib/client-image-processing';
+
 import { upload as mockUpload } from '@vercel/blob/client';
 
 // Mock fetch for username check
@@ -208,5 +210,22 @@ describe('UploadForm', () => {
     });
 
     resolveUpload({ url: TEST_BLOB_URL });
+  });
+
+  it('shows error when watermark creation fails during file selection', async () => {
+    // Arrange
+    vi.mocked(createWatermarkedPreview).mockRejectedValueOnce(
+      new Error('Canvas context unavailable')
+    );
+    const { container } = render(<UploadForm />);
+    const input = getFileInput(container);
+
+    // Act
+    fireEvent.change(input, { target: { files: [createTestFile()] } });
+
+    // Assert
+    await waitFor(() => {
+      expect(screen.getByText(/failed to process image/i)).toBeInTheDocument();
+    });
   });
 });

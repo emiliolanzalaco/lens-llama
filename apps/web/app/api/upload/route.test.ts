@@ -12,6 +12,7 @@ const VALID_METADATA = {
   height: 1080,
   price: '10.00',
   photographerAddress: TEST_WALLET_ADDRESS,
+  accessToken: 'test-access-token',
 };
 
 // Mock dependencies
@@ -19,16 +20,15 @@ vi.mock('@vercel/blob/client', () => ({
   handleUpload: vi.fn(),
 }));
 
-// Mock api-auth to bypass authentication in tests
+// Mock auth to bypass authentication in tests
+vi.mock('@/lib/auth', () => ({
+  verifyAccessToken: vi.fn().mockResolvedValue({
+    userId: 'test-user-id',
+    walletAddress: '0x1234567890123456789012345678901234567890',
+  }),
+}));
+
 vi.mock('@/lib/api-auth', () => ({
-  withAuth: (handler: any) => async (req: Request, ...args: any[]) => {
-    // Mock user object for tests
-    const mockUser = {
-      userId: 'test-user-id',
-      walletAddress: TEST_WALLET_ADDRESS,
-    };
-    return handler(req, mockUser, ...args);
-  },
   doWalletAddressesMatch: vi.fn().mockReturnValue(true),
 }));
 

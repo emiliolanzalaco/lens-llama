@@ -31,6 +31,7 @@ export const baseUploadFields = {
 
 export const metadataSchema = z.object({
   type: z.enum(['original', 'watermarked']),
+  accessToken: z.string().min(1, 'Access token is required'),
   ...baseUploadFields,
 });
 

@@ -58,9 +58,10 @@ function createClientPayload(
     width: number;
     height: number;
   },
-  type: UploadType
+  type: UploadType,
+  accessToken: string
 ): string {
-  return JSON.stringify({ ...metadata, type });
+  return JSON.stringify({ ...metadata, type, accessToken });
 }
 
 export function UploadForm() {
@@ -70,6 +71,7 @@ export function UploadForm() {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [dimensions, setDimensions] = useState<ImageDimensions | null>(null);
+  const [watermarkedFile, setWatermarkedFile] = useState<File | null>(null);
   const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -104,6 +106,7 @@ export function UploadForm() {
 
     setFile(selectedFile);
     setDimensions(null);
+    setWatermarkedFile(null);
     setIsProcessingImage(true);
     setErrors((prev) => ({ ...prev, file: undefined }));
 
@@ -112,15 +115,16 @@ export function UploadForm() {
       const dims = await getImageDimensions(selectedFile);
       setDimensions(dims);
 
-      // Create watermarked preview for display
-      const watermarkedFile = await createWatermarkedPreview(selectedFile, dims);
+      // Create watermarked preview for display (and cache for upload)
+      const watermarked = await createWatermarkedPreview(selectedFile, dims);
+      setWatermarkedFile(watermarked);
 
       // Create preview from watermarked version
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
       };
-      reader.readAsDataURL(watermarkedFile);
+      reader.readAsDataURL(watermarked);
     } catch (err) {
       console.error('Failed to process image:', err);
       setErrors((prev) => ({ ...prev, file: 'Failed to process image' }));
@@ -138,7 +142,7 @@ export function UploadForm() {
   };
 
   const performUpload = async () => {
-    if (!file || !walletAddress || !dimensions) return;
+    if (!file || !walletAddress || !dimensions || !watermarkedFile) return;
 
     setIsUploading(true);
     setUploadProgress(0);
@@ -150,9 +154,8 @@ export function UploadForm() {
         throw new Error('Failed to get access token');
       }
 
-      // Create watermarked preview
+      // Use cached watermarked preview (already created during file selection)
       setUploadProgress(PROGRESS_WATERMARK_START);
-      const watermarkedFile = await createWatermarkedPreview(file, dimensions);
 
       // Prepare metadata to send with the upload
       const metadata = {
@@ -172,10 +175,7 @@ export function UploadForm() {
         upload(file.name, file, {
           access: 'public',
           handleUploadUrl: '/api/upload',
-          clientPayload: createClientPayload(metadata, 'original'),
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          clientPayload: createClientPayload(metadata, 'original', accessToken),
           onUploadProgress: ({ percentage }) => {
             const range = PROGRESS_ORIGINAL_END - PROGRESS_ORIGINAL_START;
             setUploadProgress(PROGRESS_ORIGINAL_START + (percentage / 100) * range);
@@ -184,10 +184,7 @@ export function UploadForm() {
         upload(watermarkedFile.name, watermarkedFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
-          clientPayload: createClientPayload(metadata, 'watermarked'),
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
+          clientPayload: createClientPayload(metadata, 'watermarked', accessToken),
           onUploadProgress: ({ percentage }) => {
             const range = PROGRESS_WATERMARKED_END - PROGRESS_WATERMARKED_START;
             setUploadProgress(PROGRESS_WATERMARKED_START + (percentage / 100) * range);

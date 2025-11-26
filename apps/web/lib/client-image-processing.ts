@@ -30,7 +30,8 @@ export async function getImageDimensions(file: File): Promise<ImageDimensions> {
     bitmap.close();
     return dimensions;
   } catch (error) {
-    throw new Error('Failed to load image');
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to load image: ${message}`);
   }
 }
 
@@ -111,6 +112,7 @@ async function loadImage(file: File): Promise<ImageBitmap> {
       imageOrientation: 'from-image',
     });
   } catch (error) {
-    throw new Error('Failed to load image');
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    throw new Error(`Failed to load image: ${message}`);
   }
 }

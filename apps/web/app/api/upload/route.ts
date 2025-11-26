@@ -1,13 +1,14 @@
 import { NextResponse } from 'next/server';
 import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
 import { metadataSchema } from '@/lib/upload-validation';
-import { withAuth, doWalletAddressesMatch } from '@/lib/api-auth';
+import { verifyAccessToken } from '@/lib/auth';
+import { doWalletAddressesMatch } from '@/lib/api-auth';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 // Upload handler - validates metadata and generates upload tokens
-export const POST = withAuth(async (request, user): Promise<Response> => {
+export async function POST(request: Request): Promise<Response> {
   let body: HandleUploadBody;
 
   try {
@@ -34,6 +35,9 @@ export const POST = withAuth(async (request, user): Promise<Response> => {
           throw new Error(firstError.message);
         }
 
+        // Verify access token from clientPayload
+        const user = await verifyAccessToken(result.data.accessToken);
+
         // Verify the photographer address matches the authenticated user's wallet
         if (!doWalletAddressesMatch(user, result.data.photographerAddress)) {
           throw new Error('Photographer address does not match authenticated wallet');
@@ -56,4 +60,4 @@ export const POST = withAuth(async (request, user): Promise<Response> => {
     const message = error instanceof Error ? error.message : 'Upload failed';
     return NextResponse.json({ error: message }, { status: 400 });
   }
-});
+}
