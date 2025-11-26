@@ -62,15 +62,23 @@ export async function createWatermarkedPreview(
   // Draw resized image
   ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
 
-  // Add watermark
+  // Add watermark in tiled pattern
   const fontSize = Math.round(targetWidth * WATERMARK_FONT_SIZE_RATIO);
   ctx.font = `${fontSize}px Arial`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
 
-  // Position watermark in center
-  ctx.fillText(WATERMARK_TEXT, targetWidth / 2, targetHeight / 2);
+  // Measure text for spacing
+  const textMetrics = ctx.measureText(WATERMARK_TEXT);
+  const spacing = Math.max(textMetrics.width * 1.5, 150);
+
+  // Draw watermark in grid pattern
+  for (let y = spacing / 2; y < targetHeight; y += spacing) {
+    for (let x = spacing / 2; x < targetWidth; x += spacing) {
+      ctx.fillText(WATERMARK_TEXT, x, y);
+    }
+  }
 
   // Convert canvas to Blob
   const blob = await new Promise<Blob>((resolve, reject) => {

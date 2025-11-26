@@ -107,19 +107,22 @@ export function UploadForm() {
     setIsProcessingImage(true);
     setErrors((prev) => ({ ...prev, file: undefined }));
 
-    // Create preview
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
-
-    // Extract dimensions
     try {
+      // Extract dimensions first
       const dims = await getImageDimensions(selectedFile);
       setDimensions(dims);
+
+      // Create watermarked preview for display
+      const watermarkedFile = await createWatermarkedPreview(selectedFile, dims);
+
+      // Create preview from watermarked version
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(watermarkedFile);
     } catch (err) {
-      console.error('Failed to extract dimensions:', err);
+      console.error('Failed to process image:', err);
       setErrors((prev) => ({ ...prev, file: 'Failed to process image' }));
     } finally {
       setIsProcessingImage(false);
