@@ -40,8 +40,8 @@ export async function POST(request: Request): Promise<Response> {
         };
       },
       onUploadCompleted: async () => {
-        // No-op: Each file's completion is handled separately
-        // Client calls /api/upload/complete once both uploads finish
+        // No-op: Individual file completions are not tracked here.
+        // The client calls /api/upload/complete after both uploads finish.
       },
     });
 

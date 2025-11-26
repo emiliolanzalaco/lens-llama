@@ -196,8 +196,13 @@ describe('UploadForm', () => {
   });
 
   it('shows uploading state during upload', async () => {
-    // Make upload hang to test loading state
-    vi.mocked(mockUpload).mockImplementation(() => new Promise(() => {}));
+    // Create a promise we can control
+    let resolveUpload: () => void;
+    const uploadPromise = new Promise<{ url: string }>((resolve) => {
+      resolveUpload = () => resolve({ url: 'https://blob.vercel-storage.com/test.jpg' });
+    });
+
+    vi.mocked(mockUpload).mockReturnValue(uploadPromise);
 
     const { container } = render(<UploadForm />);
 
@@ -222,5 +227,8 @@ describe('UploadForm', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: /uploading/i })).toBeDisabled();
     });
+
+    // Clean up: resolve the promise to prevent hanging
+    resolveUpload!();
   });
 });

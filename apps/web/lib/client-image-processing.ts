@@ -3,7 +3,6 @@
  */
 
 const PREVIEW_SCALE = 0.5;
-const MAX_WIDTH = 1200;
 const WATERMARK_TEXT = '© Lens Llama';
 const WATERMARK_FONT_SIZE_RATIO = 0.03; // 3% of image width
 
@@ -52,15 +51,9 @@ export async function createWatermarkedPreview(
   // Load the image
   const img = await loadImage(file);
 
-  // Calculate preview dimensions (50% of original, capped at MAX_WIDTH)
-  let targetWidth = Math.round(dimensions.width * PREVIEW_SCALE);
-  let targetHeight = Math.round(dimensions.height * PREVIEW_SCALE);
-
-  if (targetWidth > MAX_WIDTH) {
-    const ratio = MAX_WIDTH / targetWidth;
-    targetWidth = MAX_WIDTH;
-    targetHeight = Math.round(targetHeight * ratio);
-  }
+  // Calculate preview dimensions (50% of original)
+  const targetWidth = Math.round(dimensions.width * PREVIEW_SCALE);
+  const targetHeight = Math.round(dimensions.height * PREVIEW_SCALE);
 
   // Create canvas for watermarked image
   const canvas = document.createElement('canvas');
