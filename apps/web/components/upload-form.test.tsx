@@ -128,7 +128,7 @@ describe('UploadForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/price must be a positive number/i)).toBeInTheDocument();
+      expect(screen.getByText(/price must be greater than zero/i)).toBeInTheDocument();
     });
   });
 
@@ -197,9 +197,9 @@ describe('UploadForm', () => {
 
   it('shows uploading state during upload', async () => {
     // Create a promise we can control
-    let resolveUpload: () => void;
+    let resolveUpload: (value: { url: string }) => void = () => {};
     const uploadPromise = new Promise<{ url: string }>((resolve) => {
-      resolveUpload = () => resolve({ url: 'https://blob.vercel-storage.com/test.jpg' });
+      resolveUpload = resolve;
     });
 
     vi.mocked(mockUpload).mockReturnValue(uploadPromise);
@@ -229,6 +229,6 @@ describe('UploadForm', () => {
     });
 
     // Clean up: resolve the promise to prevent hanging
-    resolveUpload!();
+    resolveUpload({ url: 'https://blob.vercel-storage.com/test.jpg' });
   });
 });

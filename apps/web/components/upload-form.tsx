@@ -23,9 +23,9 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const PROGRESS_WATERMARK_START = 10;
 const PROGRESS_UPLOAD_START = 20;
 const PROGRESS_ORIGINAL_START = 20;
-const PROGRESS_ORIGINAL_WEIGHT = 0.35;
+const PROGRESS_ORIGINAL_END = 55;
 const PROGRESS_WATERMARKED_START = 55;
-const PROGRESS_WATERMARKED_WEIGHT = 0.35;
+const PROGRESS_WATERMARKED_END = 90;
 const PROGRESS_COMPLETE_START = 90;
 
 const uploadSchema = z.object({
@@ -35,7 +35,7 @@ const uploadSchema = z.object({
   price: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num > 0;
-  }, 'Price must be a positive number'),
+  }, 'Price must be greater than zero'),
 });
 
 type FormErrors = {
@@ -165,7 +165,8 @@ export function UploadForm() {
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'original'),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(PROGRESS_ORIGINAL_START + percentage * PROGRESS_ORIGINAL_WEIGHT);
+            const range = PROGRESS_ORIGINAL_END - PROGRESS_ORIGINAL_START;
+            setUploadProgress(PROGRESS_ORIGINAL_START + (percentage / 100) * range);
           },
         }),
         upload(watermarkedFile.name, watermarkedFile, {
@@ -173,7 +174,8 @@ export function UploadForm() {
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'watermarked'),
           onUploadProgress: ({ percentage }) => {
-            setUploadProgress(PROGRESS_WATERMARKED_START + percentage * PROGRESS_WATERMARKED_WEIGHT);
+            const range = PROGRESS_WATERMARKED_END - PROGRESS_WATERMARKED_START;
+            setUploadProgress(PROGRESS_WATERMARKED_START + (percentage / 100) * range);
           },
         }),
       ]);

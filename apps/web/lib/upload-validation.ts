@@ -15,7 +15,7 @@ export const baseUploadFields = {
     if (isNaN(num) || num <= 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: 'Price must be a positive number',
+        message: 'Price must be greater than zero',
       });
       return z.NEVER;
     }

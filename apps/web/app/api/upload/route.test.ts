@@ -190,7 +190,7 @@ describe('POST /api/upload', () => {
 
       await expect(
         capturedOnBeforeGenerateToken('test.jpg', JSON.stringify(invalidMetadata))
-      ).rejects.toThrow('Price must be a positive number');
+      ).rejects.toThrow('Price must be greater than zero');
     });
   });
 });
