@@ -2,6 +2,15 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { UploadForm } from './upload-form';
 
+// Test constants
+const TEST_WALLET_ADDRESS = '0x1234567890123456789012345678901234567890';
+const TEST_IMAGE_WIDTH = 1920;
+const TEST_IMAGE_HEIGHT = 1080;
+const VALID_TITLE = 'Test Image';
+const VALID_PRICE = '9.99';
+const INVALID_PRICE = '-5';
+const TEST_BLOB_URL = 'https://blob.vercel-storage.com/test.jpg';
+
 // Mock next/navigation
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -12,7 +21,7 @@ vi.mock('next/navigation', () => ({
 // Mock useAuth hook
 vi.mock('@/lib/hooks/use-auth', () => ({
   useAuth: () => ({
-    walletAddress: '0x1234567890123456789012345678901234567890',
+    walletAddress: TEST_WALLET_ADDRESS,
   }),
 }));
 
@@ -35,23 +44,43 @@ import { upload as mockUpload } from '@vercel/blob/client';
 const mockFetch = vi.fn();
 global.fetch = mockFetch;
 
-// Helper to get the hidden file input
+// Test helpers
 const getFileInput = (container: HTMLElement) => {
   return container.querySelector('input[type="file"]') as HTMLInputElement;
+};
+
+const createTestFile = (name = 'test.jpg', type = 'image/jpeg') => {
+  return new File(['test'], name, { type });
+};
+
+const selectFile = async (container: HTMLElement, file: File) => {
+  const input = getFileInput(container);
+  fireEvent.change(input, { target: { files: [file] } });
+
+  // Wait for image processing
+  await waitFor(() => {
+    expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+  });
+};
+
+const fillFormField = (label: RegExp, value: string) => {
+  fireEvent.change(screen.getByLabelText(label), { target: { value } });
+};
+
+const submitForm = () => {
+  fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
 };
 
 describe('UploadForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockFetch.mockImplementation(async (url: string) => {
-      // Mock username check
       if (url.includes('/api/username/check-user')) {
         return {
           ok: true,
           json: async () => ({ hasUsername: true }),
         } as Response;
       }
-      // Mock upload complete
       if (url.includes('/api/upload/complete')) {
         return {
           ok: true,
@@ -61,14 +90,16 @@ describe('UploadForm', () => {
       return { ok: false } as Response;
     });
     vi.mocked(mockUpload).mockResolvedValue({
-      url: 'https://blob.vercel-storage.com/test.jpg',
+      url: TEST_BLOB_URL,
       pathname: 'test.jpg',
     } as any);
   });
 
   it('renders all form fields', () => {
+    // Arrange & Act
     render(<UploadForm />);
 
+    // Assert
     expect(screen.getByText(/^image$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/^title$/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/description/i)).toBeInTheDocument();
@@ -78,157 +109,103 @@ describe('UploadForm', () => {
   });
 
   it('shows validation error when title is empty', async () => {
+    // Arrange
     const { container } = render(<UploadForm />);
+    await selectFile(container, createTestFile());
+    fillFormField(/price/i, VALID_PRICE);
 
-    // Create and select a file
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
+    // Act
+    submitForm();
 
-    // Wait for image processing to complete
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
-    });
-
-    // Fill price but not title
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '10' },
-    });
-
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
+    // Assert
     await waitFor(() => {
       expect(screen.getByText(/title is required/i)).toBeInTheDocument();
     });
   });
 
   it('shows validation error for invalid price', async () => {
+    // Arrange
     const { container } = render(<UploadForm />);
+    await selectFile(container, createTestFile());
+    fillFormField(/^title$/i, VALID_TITLE);
+    fillFormField(/price/i, INVALID_PRICE);
 
-    // Create and select a file
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
+    // Act
+    submitForm();
 
-    // Wait for image processing to complete
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
-    });
-
-    // Fill form with invalid price
-    fireEvent.change(screen.getByLabelText(/^title$/i), {
-      target: { value: 'Test Image' },
-    });
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '-5' },
-    });
-
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
+    // Assert
     await waitFor(() => {
       expect(screen.getByText(/price must be greater than zero/i)).toBeInTheDocument();
     });
   });
 
   it('shows error when no file is selected', async () => {
+    // Arrange
     render(<UploadForm />);
+    fillFormField(/^title$/i, VALID_TITLE);
+    fillFormField(/price/i, VALID_PRICE);
 
-    // Fill form without selecting file
-    fireEvent.change(screen.getByLabelText(/^title$/i), {
-      target: { value: 'Test Image' },
-    });
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '10' },
-    });
+    // Act
+    submitForm();
 
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
+    // Assert
     await waitFor(() => {
       expect(screen.getByText(/image is required/i)).toBeInTheDocument();
     });
   });
 
   it('rejects invalid file types', async () => {
+    // Arrange
     const { container } = render(<UploadForm />);
-
-    // Try to select a PDF file
-    const file = new File(['test'], 'test.pdf', { type: 'application/pdf' });
     const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
 
+    // Act
+    fireEvent.change(input, { target: { files: [createTestFile('test.pdf', 'application/pdf')] } });
+
+    // Assert
     await waitFor(() => {
       expect(screen.getByText(/invalid file type/i)).toBeInTheDocument();
     });
   });
 
   it('shows error message when upload fails', async () => {
+    // Arrange
     vi.mocked(mockUpload).mockRejectedValue(new Error('Upload failed'));
-
     const { container } = render(<UploadForm />);
+    await selectFile(container, createTestFile());
+    fillFormField(/^title$/i, VALID_TITLE);
+    fillFormField(/price/i, VALID_PRICE);
 
-    // Create and select a file
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
+    // Act
+    submitForm();
 
-    // Wait for image processing to complete
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
-    });
-
-    // Fill form
-    fireEvent.change(screen.getByLabelText(/^title$/i), {
-      target: { value: 'Test Image' },
-    });
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '9.99' },
-    });
-
-    // Submit form
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
+    // Assert
     await waitFor(() => {
       expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
     });
   });
 
   it('shows uploading state during upload', async () => {
-    // Create a promise we can control
+    // Arrange
     let resolveUpload: (value: { url: string }) => void = () => {};
     const uploadPromise = new Promise<{ url: string }>((resolve) => {
       resolveUpload = resolve;
     });
-
     vi.mocked(mockUpload).mockReturnValue(uploadPromise);
 
     const { container } = render(<UploadForm />);
+    await selectFile(container, createTestFile());
+    fillFormField(/^title$/i, VALID_TITLE);
+    fillFormField(/price/i, VALID_PRICE);
 
-    const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const input = getFileInput(container);
-    fireEvent.change(input, { target: { files: [file] } });
+    // Act
+    submitForm();
 
-    // Wait for image processing to complete
+    // Assert
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /upload image/i })).not.toBeDisabled();
+      expect(screen.getByRole('button', { name: /uploading/i })).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByLabelText(/^title$/i), {
-      target: { value: 'Test Image' },
-    });
-    fireEvent.change(screen.getByLabelText(/price/i), {
-      target: { value: '9.99' },
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: /upload image/i }));
-
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: /uploading/i })).toBeDisabled();
-    });
-
-    // Clean up: resolve the promise to prevent hanging
-    resolveUpload({ url: 'https://blob.vercel-storage.com/test.jpg' });
+    resolveUpload({ url: TEST_BLOB_URL });
   });
 });
