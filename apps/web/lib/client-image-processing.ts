@@ -121,7 +121,7 @@ export async function createWatermarkedPreview(
   const spacing = Math.max(textMetrics.width * 1.5, 150);
 
   // Draw watermark in grid pattern with diagonal rotation
-  const angle = -45 * (Math.PI / 180); // -45 degrees in radians
+  const angle = -30 * (Math.PI / 180); // -30 degrees in radians
 
   for (let y = spacing / 2; y < targetDims.height; y += spacing) {
     for (let x = spacing / 2; x < targetDims.width; x += spacing) {

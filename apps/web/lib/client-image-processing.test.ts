@@ -180,7 +180,7 @@ describe('client-image-processing', () => {
       expect(mockCanvas.height).toBe(expectedHeight);
     });
 
-    it('draws watermark text diagonally at -45 degrees', async () => {
+    it('draws watermark text diagonally at -30 degrees', async () => {
       // Arrange
       const testFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       const mockBitmap = new MockImageBitmap(TEST_IMAGE_WIDTH, TEST_IMAGE_HEIGHT);
@@ -193,7 +193,7 @@ describe('client-image-processing', () => {
       await createWatermarkedPreview(testFile, { width: TEST_IMAGE_WIDTH, height: TEST_IMAGE_HEIGHT });
 
       // Assert - verify rotation was applied
-      const expectedAngle = -45 * (Math.PI / 180);
+      const expectedAngle = -30 * (Math.PI / 180);
       expect(mockContext.rotate).toHaveBeenCalledWith(expectedAngle);
       expect(mockContext.save).toHaveBeenCalled();
       expect(mockContext.restore).toHaveBeenCalled();
