@@ -2,11 +2,11 @@
  * Client-side image processing utilities
  */
 
-const PREVIEW_SCALE = 0.5; // 50% of original for watermarked preview
-const MAX_DIMENSION = 1200; // Max width or height for watermarked preview
-const MAX_FILE_SIZE = 500 * 1024; // 500KB maximum file size
+const PREVIEW_SCALE = 0.4; // 40% of original - smaller preview
+const MAX_DIMENSION = 800; // Max 800px - much smaller for intentionally degraded preview
+const MAX_FILE_SIZE = 200 * 1024; // 200KB maximum - very aggressive compression
 const WATERMARK_TEXT = '© Lens Llama';
-const WATERMARK_FONT_SIZE_RATIO = 0.03; // 3% of image width
+const WATERMARK_FONT_SIZE_RATIO = 0.04; // 4% of image width - larger watermark
 
 export interface ImageDimensions {
   width: number;
@@ -43,15 +43,15 @@ function calculatePreviewDimensions(width: number, height: number): ImageDimensi
 
 /**
  * Compress canvas to target file size using iterative quality reduction
- * Starts at 65% quality and reduces by 10% steps until size target is met
+ * Intentionally degrades quality to encourage purchasing full-resolution originals
  */
 async function compressToTargetSize(
   canvas: HTMLCanvasElement,
   fileType: string,
   maxSize: number
 ): Promise<Blob> {
-  let quality = 0.65; // Start at 65% - more aggressive compression
-  const minQuality = 0.35; // Don't go below 35%
+  let quality = 0.5; // Start at 50% - low quality preview
+  const minQuality = 0.2; // Can go as low as 20% for very degraded preview
   const qualityStep = 0.1;
 
   while (quality >= minQuality) {
