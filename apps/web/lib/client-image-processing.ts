@@ -43,15 +43,15 @@ function calculatePreviewDimensions(width: number, height: number): ImageDimensi
 
 /**
  * Compress canvas to target file size using iterative quality reduction
- * Starts at 80% quality and reduces by 10% steps until size target is met
+ * Starts at 65% quality and reduces by 10% steps until size target is met
  */
 async function compressToTargetSize(
   canvas: HTMLCanvasElement,
   fileType: string,
   maxSize: number
 ): Promise<Blob> {
-  let quality = 0.8; // Start at 80% instead of 90%
-  const minQuality = 0.5; // Don't go below 50%
+  let quality = 0.65; // Start at 65% - more aggressive compression
+  const minQuality = 0.35; // Don't go below 35%
   const qualityStep = 0.1;
 
   while (quality >= minQuality) {
