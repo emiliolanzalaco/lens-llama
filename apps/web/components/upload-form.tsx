@@ -138,6 +138,8 @@ export function UploadForm() {
     setIsUploading(true);
     setUploadProgress(0);
 
+    let progressInterval: NodeJS.Timeout | null = null;
+
     try {
       // Get access token for authentication
       const accessToken = await getAccessToken();
@@ -161,6 +163,15 @@ export function UploadForm() {
       // Watermarked preview already cached during file selection
       setUploadProgress(40);
 
+      // Simulate smooth progress during upload (40% → 78%)
+      let currentProgress = 40;
+      progressInterval = setInterval(() => {
+        currentProgress += 2;
+        if (currentProgress < 78) {
+          setUploadProgress((prev) => Math.max(prev, currentProgress));
+        }
+      }, 200); // Update every 200ms
+
       // Upload original and watermarked files to Vercel Blob from the client
       const [originalBlob, watermarkedBlob] = await Promise.all([
         upload(file.name, file, {
@@ -175,7 +186,9 @@ export function UploadForm() {
         }),
       ]);
 
-      setUploadProgress(80); // Uploads complete
+      clearInterval(progressInterval);
+      progressInterval = null;
+      setUploadProgress((prev) => Math.max(prev, 80)); // Uploads complete
 
       // Save to database
       const completeResponse = await fetch('/api/upload/complete', {
@@ -203,9 +216,12 @@ export function UploadForm() {
       }
 
       // Small delay to show 100% before redirect
-      setUploadProgress(100);
+      setUploadProgress((prev) => Math.max(prev, 100));
       setTimeout(() => router.push('/'), 500);
     } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setSubmitError(
         error instanceof Error ? error.message : 'Upload failed'
       );
