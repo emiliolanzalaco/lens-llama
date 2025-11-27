@@ -10,9 +10,33 @@
 
 **For AI Agents:**
 - **TECHNICAL_SPEC is your primary reference** - it contains all architecture, schemas, and implementation details
-- Use Context7 MCP for library documentation (Privy, Drizzle, Viem, Sharp, Next.js)
+- Use Context7 MCP for library documentation (Privy, Drizzle, Viem, Next.js)
 - Use Vercel MCP for deployment and debugging
 - Do not reference AI/Claude in commits or PRs - author as the GitHub user
+
+---
+
+## Current Status (MVP Phase)
+
+**✅ Completed:**
+- Phase 1: Foundation (project setup, database, Privy auth)
+- Phase 2: Storage & Upload (Vercel Blob integration, client-side watermarking, upload API)
+- Phase 3.1-3.2: Browse & Display (images list API, homepage UI)
+- Phase 3.5: Username System (database, API, UI)
+
+**🚧 In Progress:**
+- None currently
+
+**📋 Next Up:**
+- Phase 3.3-3.4: Image detail page with x402 payment integration
+- Phase 4: Smart contracts and payment flow
+
+**📝 Key Implementation Notes:**
+- Using **Vercel Blob** for storage (not Filecoin/Synapse SDK as originally planned)
+- **Client-side image processing** (Canvas API for watermarking, not server-side Sharp)
+- **Privy authentication** with embedded wallets for email/Google login
+- **Username system** allows photographers to claim display names
+- **Smooth progress bars** (0% → 100%) during upload with simulated increments
 
 ---
 
@@ -137,54 +161,56 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 
 ## Phase 2: Storage & Upload
 
-### 2.1 Synapse SDK Integration
-- [x] Install @filoz/synapse-sdk
-- [x] Create Synapse client singleton with private key config
-- [x] Implement upload function (see TECHNICAL_SPEC for encryption flow)
-- [x] Implement download function with decryption
-- [x] Add error handling and retry logic for network failures
-- [x] Write unit tests for client configuration
-- [ ] Test full upload → download round-trip with Filecoin testnet
+### 2.1 Vercel Blob Integration
+- [x] Install @vercel/blob client and server packages
+- [x] Configure Vercel Blob in Next.js API route
+- [x] Implement handleUpload with onBeforeGenerateToken callback
+- [x] Add metadata validation in upload token generation
+- [x] Add JWT verification in onBeforeGenerateToken
+- [x] Test parallel uploads (original + watermarked)
+- [x] Verify Blob URLs are generated correctly
 
-**Branch:** `feature/synapse-storage` | **Assigned:** _in progress_
+**Branch:** `feature/blob-storage` | **Assigned:** _complete_
 
-### 2.2 Image Processing
-- [x] Install Sharp
-- [x] Create watermark function: diagonal "LensLlama" text, semi-transparent
-- [x] Create resize function: max 1200px width, maintain aspect ratio
-- [x] Create AES-256-CBC encryption utility (see TECHNICAL_SPEC for code)
-- [x] Create matching decryption utility
-- [x] Write unit tests for each function
+### 2.2 Client-Side Image Processing
+- [x] Create watermark function using Canvas API: diagonal "© Lens Llama" text, semi-transparent
+- [x] Implement dimension extraction using createImageBitmap (EXIF-aware)
+- [x] Create watermarked preview generation (40% scale OR max 800px)
+- [x] Implement 70% JPEG quality compression
+- [x] Add -30 degree diagonal rotation for watermark
+- [x] Write unit tests for getImageDimensions and createWatermarkedPreview
 - [x] Test with JPEG, PNG, WebP formats
-- [x] Test edge cases: very large images, small images
+- [x] Test edge cases: portrait/landscape, small/large images
 
-**Branch:** `feature/image-processing` | **Assigned:** _complete_
+**Branch:** `feature/client-image-processing` | **Assigned:** _complete_
 
-### 2.3 Upload API Endpoint
-- [x] Create POST /api/upload route handler
-- [x] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
-- [x] Validate request body with Zod schema (title, price, photographerAddress, tags)
-- [x] Generate watermarked preview with Sharp
-- [x] Encrypt full resolution with AES-256
-- [x] Upload both to Filecoin via Synapse SDK
-- [x] Save to database: CIDs, encryption key, metadata
-- [x] Return encrypted_cid, watermarked_cid, id
-- [x] Write integration tests for success and error cases
-- [ ] Add rate limiting
+### 2.3 Upload API Endpoints
+- [x] Create POST /api/upload route with handleUpload callback
+- [x] Validate clientPayload with Zod schema (metadata + accessToken)
+- [x] Verify JWT token via Privy in onBeforeGenerateToken
+- [x] Check photographer address matches authenticated wallet
+- [x] Return upload configuration (allowed types, max size, random suffix)
+- [x] Create POST /api/upload/complete route
+- [x] Save image metadata and Blob URLs to database
+- [x] Lookup and attach photographer username
+- [x] Write integration tests for both endpoints
+- [x] Test error cases (invalid token, wallet mismatch, validation errors)
 
-**Branch:** `feature/upload-api` | **Assigned:** _in progress_
+**Branch:** `feature/upload-api` | **Assigned:** _complete_
 
 ### 2.4 Upload Page UI
-- [ ] Create /upload page (protected - requires Privy auth)
-- [ ] Build drag-and-drop file upload component
-- [ ] Add form fields: title, description, tags (comma-separated), price (USDC)
-- [ ] Client-side validation before submit
-- [ ] Show upload progress indicator
-- [ ] Handle success: redirect to homepage
-- [ ] Handle errors: display user-friendly message
-- [ ] Write component tests
+- [x] Create /upload page (protected - requires Privy auth)
+- [x] Build file dropzone component with drag-and-drop
+- [x] Add form fields: title, description, tags, price (USDC)
+- [x] Client-side validation with Zod schema
+- [x] Show smooth upload progress bar (0% → 100%)
+- [x] Implement username claim modal for first upload
+- [x] Handle dual Blob upload (original + watermarked in parallel)
+- [x] Handle success: redirect to homepage
+- [x] Handle errors: display user-friendly messages
+- [x] Write component tests for upload form and username modal
 
-**Branch:** `feature/upload-ui` | **Assigned:** _unclaimed_
+**Branch:** `feature/upload-ui` | **Assigned:** _complete_
 
 ---
 
@@ -193,22 +219,25 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 ### 3.1 Images List API
 - [x] Create GET /api/images route handler
 - [x] Query all images from database
-- [x] Return: watermarked_cid, title, price, photographer_address, id
+- [x] Return: watermarkedBlobUrl, title, price, photographer info, metadata
 - [x] Order by created_at DESC
 - [x] Write integration tests
 - [x] Test empty database case
 
-**Branch:** `feature/images-list-api` | **Assigned:** _unclaimed_
+**Branch:** `feature/images-list-api` | **Assigned:** _complete_
+
+**Note**: Returns Vercel Blob URLs (not IPFS CIDs) for watermarked previews
 
 ### 3.2 Homepage UI
-- [x] Build responsive image grid (4 cols desktop, 2 cols mobile)
-- [x] Create ImageCard component: thumbnail from IPFS, title, price
+- [x] Build responsive image grid (3-4 cols desktop, 2 cols mobile)
+- [x] Create ImageCard component: thumbnail from Blob URL, title, price, photographer
 - [x] Fetch images from /api/images on load
-- [x] Link each card to /image/[id]
+- [x] Link each card to /image/[id] (future)
 - [x] Add loading skeleton state
+- [x] Display photographer username (or truncated address if no username)
 - [x] Write component tests
 
-**Branch:** `feature/homepage` | **Assigned:** _unclaimed_
+**Branch:** `feature/homepage` | **Assigned:** _complete_
 
 ### 3.3 Image Detail API (x402)
 - [ ] Create GET /api/images/[id] route handler
@@ -235,6 +264,43 @@ Naming: `[filename].test.ts` or `[filename].test.tsx`
 - [ ] E2E test for complete purchase flow
 
 **Branch:** `feature/image-detail-ui` | **Assigned:** _unclaimed_
+
+---
+
+## Phase 3.5: Username System
+
+### 3.5.1 Username Database Schema
+- [x] Create usernames table with unique constraints
+- [x] Add indexes on userAddress and username
+- [x] Add firstImageId foreign key to images table
+- [x] Run database migration
+
+**Branch:** `feature/username-schema` | **Assigned:** _complete_
+
+### 3.5.2 Username API Endpoints
+- [x] Create POST /api/username/check-user endpoint
+- [x] Implement username availability check
+- [x] Create POST /api/username/claim endpoint
+- [x] Add JWT verification for claim endpoint
+- [x] Validate username format (3-63 chars, alphanumeric + underscore)
+- [x] Prevent duplicate usernames
+- [x] Prevent multiple claims per address
+- [x] Write integration tests for both endpoints
+- [x] Test error cases (taken username, invalid format, duplicate claim)
+
+**Branch:** `feature/username-api` | **Assigned:** _complete_
+
+### 3.5.3 Username Claim UI
+- [x] Create UsernameClaimModal component
+- [x] Show modal on first upload if no username exists
+- [x] Add username input with validation
+- [x] Display error messages (taken, invalid format)
+- [x] Call /api/username/claim on submit
+- [x] Continue upload flow after successful claim
+- [x] Handle claim errors gracefully
+- [x] Write component tests
+
+**Branch:** `feature/username-ui` | **Assigned:** _complete_
 
 ---
 
