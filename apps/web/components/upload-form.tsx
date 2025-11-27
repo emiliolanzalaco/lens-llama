@@ -136,19 +136,19 @@ export function UploadForm() {
     if (!file || !walletAddress || !dimensions || !watermarkedFile) return;
 
     setIsUploading(true);
-    setUploadProgress(0);
+    setUploadProgress(10); // Start at 10% to show immediate feedback
 
     let progressInterval: NodeJS.Timeout | null = null;
 
     try {
-      // Simulate smooth initial progress (0% → 38%)
-      let currentProgress = 0;
+      // Simulate smooth initial progress (10% → 38%)
+      let currentProgress = 10;
       progressInterval = setInterval(() => {
-        currentProgress += 2;
+        currentProgress += 1;
         if (currentProgress < 38) {
           setUploadProgress((prev) => Math.max(prev, currentProgress));
         }
-      }, 100); // Update every 100ms
+      }, 80); // Update every 80ms for smoother animation
 
       // Get access token for authentication
       const accessToken = await getAccessToken();
