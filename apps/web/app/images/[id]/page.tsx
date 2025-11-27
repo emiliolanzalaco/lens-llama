@@ -156,8 +156,6 @@ export default function ImageDetailPage() {
     );
   }
 
-
-  console.log(image);
   return (
     <div className="min-h-screen bg-white">
       <div className="mx-auto max-w-7xl px-6 py-12 md:px-12">

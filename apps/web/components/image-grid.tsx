@@ -1,22 +1,17 @@
-
 import React from 'react';
 import ImageCard from './ui/image-card';
-import { ImageWithSize } from './types';
+import { Image } from './types';
 
 interface ImageGridProps {
-    images: ImageWithSize[];
-    onImageClick: (image: ImageWithSize) => void;
+    images: Image[];
+    onImageClick: (image: Image) => void;
 }
 
 const ImageGrid: React.FC<ImageGridProps> = ({ images, onImageClick }) => {
     return (
         <div className="w-full">
-            {/* 
-        CSS Grid with Dense packing to fill holes. 
-        auto-rows defines the base height unit.
-        minmax(200px, 1fr) ensures responsive column widths.
-      */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 grid-flow-dense auto-rows-[180px]">
+            {/* CSS Columns masonry layout - equal column widths, natural heights */}
+            <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2">
                 {images.map((image) => (
                     <ImageCard key={image.id} image={image} onClick={onImageClick} />
                 ))}

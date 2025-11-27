@@ -73,5 +73,8 @@ describe('resize', () => {
       expect(dimensions.width).toBe(500);
       expect(dimensions.height).toBe(500);
     });
+
+    // Note: EXIF orientation handling is tested implicitly via real-world usage.
+    // Synthetic EXIF tests would test sharp's implementation, not our behavior.
   });
 });
