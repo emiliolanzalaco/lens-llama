@@ -14,7 +14,7 @@ export interface ImageDimensions {
 }
 
 /**
- * Calculate preview dimensions using combination of 50% scaling and max dimension limit
+ * Calculate preview dimensions using combination of 40% scaling and max dimension limit
  * Uses whichever produces smaller dimensions
  */
 function calculatePreviewDimensions(width: number, height: number): ImageDimensions {
