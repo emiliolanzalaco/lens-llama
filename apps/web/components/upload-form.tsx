@@ -141,13 +141,20 @@ export function UploadForm() {
     let progressInterval: NodeJS.Timeout | null = null;
 
     try {
+      // Simulate smooth initial progress (0% → 38%)
+      let currentProgress = 0;
+      progressInterval = setInterval(() => {
+        currentProgress += 2;
+        if (currentProgress < 38) {
+          setUploadProgress((prev) => Math.max(prev, currentProgress));
+        }
+      }, 100); // Update every 100ms
+
       // Get access token for authentication
       const accessToken = await getAccessToken();
       if (!accessToken) {
         throw new Error('Failed to get access token');
       }
-
-      setUploadProgress(20); // Started
 
       // Prepare metadata to send with the upload
       const metadata = {
@@ -160,11 +167,12 @@ export function UploadForm() {
         height: dimensions.height,
       };
 
-      // Watermarked preview already cached during file selection
-      setUploadProgress(40);
+      // Clear initial progress interval and set to 40%
+      clearInterval(progressInterval);
+      setUploadProgress((prev) => Math.max(prev, 40));
 
       // Simulate smooth progress during upload (40% → 78%)
-      let currentProgress = 40;
+      currentProgress = 40;
       progressInterval = setInterval(() => {
         currentProgress += 2;
         if (currentProgress < 78) {
