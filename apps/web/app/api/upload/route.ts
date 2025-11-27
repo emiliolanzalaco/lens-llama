@@ -1,13 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db, images, usernames } from '@lens-llama/database';
-import {
-  addWatermark,
-  resizeForPreview,
-  getImageDimensions,
-} from '@lens-llama/image-processing';
-import { uploadToBlob } from '@lens-llama/storage';
-import { z } from 'zod';
-import { eq } from 'drizzle-orm';
+import { NextResponse } from 'next/server';
+import { handleUpload, type HandleUploadBody } from '@vercel/blob/client';
+import { metadataSchema } from '@/lib/upload-validation';
+import { verifyAccessToken } from '@/lib/auth';
+import { doWalletAddressesMatch } from '@/lib/api-auth';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -19,129 +14,62 @@ class ValidationError extends Error {
   }
 }
 
-const uploadSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().nullable(),
-  tags: z.string().transform((val) =>
-    val ? val.split(',').map((t) => t.trim()).filter(Boolean) : []
-  ),
-  price: z.string().transform((val, ctx) => {
-    const num = parseFloat(val);
-    if (isNaN(num) || num <= 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: 'Price must be a positive number',
-      });
-      return z.NEVER;
-    }
-    return num;
-  }),
-  photographerAddress: z.string().regex(
-    /^0x[a-fA-F0-9]{40}$/,
-    'Invalid Ethereum address'
-  ),
-});
+// Upload handler - validates metadata and generates upload tokens
+export async function POST(request: Request): Promise<Response> {
+  let body: HandleUploadBody;
 
-type UploadRequest = z.infer<typeof uploadSchema> & { file: File };
-
-function validateRequest(formData: FormData): UploadRequest {
-  const file = formData.get('file') as File | null;
-
-  if (!file) {
-    throw new ValidationError('File is required');
-  }
-
-  if (file.size > MAX_FILE_SIZE) {
-    throw new ValidationError(`File size exceeds maximum of ${MAX_FILE_SIZE / 1024 / 1024}MB`);
-  }
-
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new ValidationError('Invalid file type. Allowed: JPEG, PNG, WebP');
-  }
-
-  const result = uploadSchema.safeParse({
-    title: formData.get('title') ?? '',
-    description: formData.get('description') ?? null,
-    tags: formData.get('tags') ?? '',
-    price: formData.get('price') ?? '',
-    photographerAddress: formData.get('photographerAddress') ?? '',
-  });
-
-  if (!result.success) {
-    const firstError = result.error.errors[0];
-    throw new ValidationError(firstError.message);
-  }
-
-  return { file, ...result.data };
-}
-
-async function processImage(imageBuffer: Buffer) {
-  const dimensions = await getImageDimensions(imageBuffer);
-  const resized = await resizeForPreview(imageBuffer);
-  const watermarked = await addWatermark(resized);
-
-  return { dimensions, watermarked };
-}
-
-export async function POST(request: NextRequest) {
   try {
-    console.log('[Upload] Starting upload...');
+    body = (await request.json()) as HandleUploadBody;
+  } catch {
+    return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+  }
 
-    console.log('[Upload] Parsing form data...');
-    const formData = await request.formData();
-    const data = validateRequest(formData);
+  try {
+    const jsonResponse = await handleUpload({
+      body,
+      request,
+      onBeforeGenerateToken: async (pathname, clientPayload) => {
+        // Validate metadata from client
+        if (!clientPayload) {
+          throw new ValidationError('Missing upload metadata');
+        }
 
-    console.log('[Upload] Processing image...');
-    const imageBuffer = Buffer.from(await data.file.arrayBuffer());
-    const { dimensions, watermarked } = await processImage(imageBuffer);
+        const metadata = JSON.parse(clientPayload);
+        const result = metadataSchema.safeParse(metadata);
 
-    // Generate unique filenames
-    const timestamp = Date.now();
-    const originalFilename = `original-${timestamp}-${data.file.name}`;
-    const watermarkedFilename = `watermarked-${timestamp}-${data.file.name}`;
+        if (!result.success) {
+          const firstError = result.error.errors[0];
+          throw new ValidationError(firstError.message);
+        }
 
-    console.log('[Upload] Uploading to Vercel Blob...');
-    const [originalResult, watermarkedResult] = await Promise.all([
-      uploadToBlob(imageBuffer, originalFilename),
-      uploadToBlob(watermarked, watermarkedFilename),
-    ]);
-    console.log('[Upload] Blob upload complete');
+        // Verify access token from clientPayload
+        const user = await verifyAccessToken(result.data.accessToken);
 
-    console.log('[Upload] Checking for existing username...');
-    const [existingUsername] = await db
-      .select()
-      .from(usernames)
-      .where(eq(usernames.userAddress, data.photographerAddress.toLowerCase()))
-      .limit(1);
+        // Verify the photographer address matches the authenticated user's wallet
+        if (!doWalletAddressesMatch(user, result.data.photographerAddress)) {
+          throw new ValidationError('Photographer address does not match authenticated wallet');
+        }
 
-    console.log('[Upload] Saving to database...');
-    const [image] = await db
-      .insert(images)
-      .values({
-        originalBlobUrl: originalResult.url,
-        watermarkedBlobUrl: watermarkedResult.url,
-        photographerAddress: data.photographerAddress,
-        photographerUsername: existingUsername?.username || null,
-        title: data.title,
-        description: data.description,
-        tags: data.tags,
-        priceUsdc: data.price.toFixed(2),
-        width: dimensions.width,
-        height: dimensions.height,
-      })
-      .returning({ id: images.id });
-    console.log('[Upload] Complete! ID:', image.id);
-
-    return NextResponse.json({
-      id: image.id,
-      originalBlobUrl: originalResult.url,
-      watermarkedBlobUrl: watermarkedResult.url,
-      hasUsername: !!existingUsername,
-      isFirstUpload: !existingUsername,
+        return {
+          allowedContentTypes: ALLOWED_TYPES,
+          maximumSizeInBytes: MAX_FILE_SIZE,
+          addRandomSuffix: true,
+        };
+      },
+      onUploadCompleted: async () => {
+        // No-op: Individual file completions are not tracked here.
+        // The client calls /api/upload/complete after both uploads finish.
+      },
     });
+
+    return NextResponse.json(jsonResponse);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Upload failed';
-    const status = error instanceof ValidationError ? 400 : 500;
-    return NextResponse.json({ error: message }, { status });
+    if (error instanceof ValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    // Log internal errors for debugging but don't expose details to client
+    console.error('Upload error:', error);
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
   }
 }

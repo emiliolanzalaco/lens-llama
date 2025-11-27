@@ -13,6 +13,7 @@ export function useAuth() {
     linkEmail,
     linkGoogle,
     linkWallet,
+    getAccessToken,
   } = usePrivy();
 
   const { wallets } = useWallets();
@@ -77,6 +78,9 @@ export function useAuth() {
     linkEmail,
     linkGoogle,
     linkWallet,
+
+    // Token
+    getAccessToken,
 
     // Signing
     signMessage,

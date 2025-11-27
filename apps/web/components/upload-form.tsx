@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { upload } from '@vercel/blob/client';
 import { z } from 'zod';
 import { useAuth } from '@/lib/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,11 @@ import { FileDropzone } from '@/components/ui/file-dropzone';
 import { FormField } from '@/components/ui/form-field';
 import { ProgressBar } from '@/components/ui/progress-bar';
 import { UsernameClaimModal } from '@/components/username-claim-modal';
+import {
+  getImageDimensions,
+  createWatermarkedPreview,
+  type ImageDimensions,
+} from '@/lib/client-image-processing';
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -20,7 +26,7 @@ const uploadSchema = z.object({
   price: z.string().refine((val) => {
     const num = parseFloat(val);
     return !isNaN(num) && num > 0;
-  }, 'Price must be a positive number'),
+  }, 'Price must be greater than zero'),
 });
 
 type FormErrors = {
@@ -31,18 +37,38 @@ type FormErrors = {
   price?: string;
 };
 
+type UploadType = 'original' | 'watermarked';
+
+function createClientPayload(
+  metadata: {
+    title: string;
+    description: string | null;
+    tags: string;
+    price: string;
+    photographerAddress: string;
+    width: number;
+    height: number;
+  },
+  type: UploadType,
+  accessToken: string
+): string {
+  return JSON.stringify({ ...metadata, type, accessToken });
+}
+
 export function UploadForm() {
   const router = useRouter();
-  const { walletAddress } = useAuth();
+  const { walletAddress, getAccessToken } = useAuth();
 
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState<ImageDimensions | null>(null);
+  const [watermarkedFile, setWatermarkedFile] = useState<File | null>(null);
+  const [isProcessingImage, setIsProcessingImage] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -61,7 +87,7 @@ export function UploadForm() {
     return null;
   };
 
-  const handleFileSelect = useCallback((selectedFile: File) => {
+  const handleFileSelect = useCallback(async (selectedFile: File) => {
     const error = validateFile(selectedFile);
     if (error) {
       setErrors((prev) => ({ ...prev, file: error }));
@@ -69,13 +95,32 @@ export function UploadForm() {
     }
 
     setFile(selectedFile);
+    setDimensions(null);
+    setWatermarkedFile(null);
+    setIsProcessingImage(true);
     setErrors((prev) => ({ ...prev, file: undefined }));
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      setPreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(selectedFile);
+    try {
+      // Extract dimensions first
+      const dims = await getImageDimensions(selectedFile);
+      setDimensions(dims);
+
+      // Create watermarked preview for upload (cached)
+      const watermarked = await createWatermarkedPreview(selectedFile, dims);
+      setWatermarkedFile(watermarked);
+
+      // Create preview from ORIGINAL (not watermarked)
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(selectedFile);
+    } catch (err) {
+      console.error('Failed to process image:', err);
+      setErrors((prev) => ({ ...prev, file: 'Failed to process image' }));
+    } finally {
+      setIsProcessingImage(false);
+    }
   }, []);
 
   const handleInputChange = (
@@ -87,39 +132,95 @@ export function UploadForm() {
   };
 
   const performUpload = async () => {
-    if (!file || !walletAddress) return;
+    if (!file || !walletAddress || !dimensions || !watermarkedFile) return;
 
-    setIsUploading(true);
-    setUploadProgress(0);
+    let progressInterval: NodeJS.Timeout | null = null;
 
     try {
-      const formDataToSend = new FormData();
-      formDataToSend.append('file', file);
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('tags', formData.tags);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('photographerAddress', walletAddress);
+      // Simulate smooth initial progress (0% → 38%)
+      progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev < 38) {
+            return prev + 1;
+          }
+          return prev;
+        });
+      }, 80); // Update every 80ms for smoother animation
 
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => Math.min(prev + 10, 90));
-      }, 200);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formDataToSend,
-      });
-
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Upload failed');
+      // Get access token for authentication
+      const accessToken = await getAccessToken();
+      if (!accessToken) {
+        throw new Error('Failed to get access token');
       }
 
-      setUploadProgress(100);
+      // Prepare metadata to send with the upload
+      const metadata = {
+        title: formData.title,
+        description: formData.description || null,
+        tags: formData.tags,
+        price: formData.price,
+        photographerAddress: walletAddress,
+        width: dimensions.width,
+        height: dimensions.height,
+      };
+
+      // Clear initial progress interval and set to 40%
+      clearInterval(progressInterval);
+      setUploadProgress((prev) => Math.max(prev, 40));
+
+      // Simulate smooth progress during upload (→ 78%)
+      progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          if (prev < 78) {
+            return prev + 2;
+          }
+          return prev;
+        });
+      }, 200); // Update every 200ms
+
+      // Upload original and watermarked files to Vercel Blob from the client
+      const [originalBlob, watermarkedBlob] = await Promise.all([
+        upload(file.name, file, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: createClientPayload(metadata, 'original', accessToken),
+        }),
+        upload(watermarkedFile.name, watermarkedFile, {
+          access: 'public',
+          handleUploadUrl: '/api/upload',
+          clientPayload: createClientPayload(metadata, 'watermarked', accessToken),
+        }),
+      ]);
+
+      clearInterval(progressInterval);
+      setUploadProgress((prev) => Math.max(prev, 80)); // Uploads complete
+
+      // Save to database
+      const completeResponse = await fetch('/api/upload/complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          ...metadata,
+          originalUrl: originalBlob.url,
+          watermarkedUrl: watermarkedBlob.url,
+        }),
+      });
+
+      if (!completeResponse.ok) {
+        const error = await completeResponse.json();
+        throw new Error(error.error || 'Failed to save upload');
+      }
+
+      // Small delay to show 100% before redirect
+      setUploadProgress((prev) => Math.max(prev, 100));
       setTimeout(() => router.push('/'), 500);
     } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
       setSubmitError(
         error instanceof Error ? error.message : 'Upload failed'
       );
@@ -153,6 +254,10 @@ export function UploadForm() {
       return;
     }
 
+    // Show progress bar immediately
+    setIsUploading(true);
+    setUploadProgress(0);
+
     // Check if user already has a username
     try {
       const checkResponse = await fetch('/api/username/check-user', {
@@ -166,7 +271,8 @@ export function UploadForm() {
 
         if (!hasUsername) {
           // First upload, show username modal before uploading
-          setPendingUpload(true);
+          setIsUploading(false);
+          setUploadProgress(0);
           setShowUsernameModal(true);
           return;
         }
@@ -182,9 +288,10 @@ export function UploadForm() {
 
   const handleUsernameSuccess = async (username: string) => {
     setShowUsernameModal(false);
-    setPendingUpload(false);
 
-    // Now perform the upload
+    // Set upload state and perform the upload
+    setIsUploading(true);
+    setUploadProgress(0);
     await performUpload();
   };
 
@@ -240,8 +347,12 @@ export function UploadForm() {
           <p className="text-sm text-red-600">{submitError}</p>
         )}
 
-        <Button type="submit" disabled={isUploading} className="w-full">
-          {isUploading ? 'Uploading...' : 'Upload Image'}
+        <Button
+          type="submit"
+          disabled={isUploading || isProcessingImage}
+          className="w-full"
+        >
+          {isUploading ? 'Uploading...' : isProcessingImage ? 'Processing...' : 'Upload Image'}
         </Button>
       </form>
 

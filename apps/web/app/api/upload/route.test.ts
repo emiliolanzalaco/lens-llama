@@ -1,8 +1,37 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from './route';
-import { NextRequest } from 'next/server';
+
+// Test constants
+const TEST_WALLET_ADDRESS = '0x1234567890123456789012345678901234567890';
+const VALID_METADATA = {
+  type: 'original' as const,
+  title: 'Test Image',
+  description: null,
+  tags: 'nature',
+  width: 1920,
+  height: 1080,
+  price: '10.00',
+  photographerAddress: TEST_WALLET_ADDRESS,
+  accessToken: 'test-access-token',
+};
 
 // Mock dependencies
+vi.mock('@vercel/blob/client', () => ({
+  handleUpload: vi.fn(),
+}));
+
+// Mock auth to bypass authentication in tests
+vi.mock('@/lib/auth', () => ({
+  verifyAccessToken: vi.fn().mockResolvedValue({
+    userId: 'test-user-id',
+    walletAddress: '0x1234567890123456789012345678901234567890',
+  }),
+}));
+
+vi.mock('@/lib/api-auth', () => ({
+  doWalletAddressesMatch: vi.fn().mockReturnValue(true),
+}));
+
 vi.mock('@lens-llama/database', () => ({
   db: {
     insert: vi.fn().mockReturnValue({
@@ -20,106 +49,123 @@ vi.mock('@lens-llama/database', () => ({
   },
   images: {},
   usernames: {},
-  encryptWithMasterKey: vi.fn().mockReturnValue('encrypted-key'),
 }));
 
-vi.mock('@lens-llama/image-processing', () => ({
-  addWatermark: vi.fn().mockResolvedValue(Buffer.from('watermarked')),
-  resizeForPreview: vi.fn().mockResolvedValue(Buffer.from('resized')),
-  getImageDimensions: vi.fn().mockResolvedValue({ width: 1920, height: 1080 }),
-  generateEncryptionKey: vi.fn().mockReturnValue(Buffer.alloc(32)),
-  encryptImage: vi.fn().mockReturnValue(Buffer.from('encrypted')),
-  keyToHex: vi.fn().mockReturnValue('hex-key'),
-}));
+import { handleUpload } from '@vercel/blob/client';
 
-vi.mock('@lens-llama/storage', () => ({
-  uploadToBlob: vi.fn().mockResolvedValue({ url: 'https://blob.vercel-storage.com/test', size: 100 }),
-}));
-
-function createFormData(overrides: Record<string, string | Blob> = {}) {
-  const formData = new FormData();
-  const file = new Blob(['test image'], { type: 'image/jpeg' });
-
-  formData.append('file', file, 'test.jpg');
-  formData.append('title', 'Test Image');
-  formData.append('price', '10.00');
-  formData.append('photographerAddress', '0x1234567890123456789012345678901234567890');
-
-  for (const [key, value] of Object.entries(overrides)) {
-    formData.set(key, value);
-  }
-
-  return formData;
-}
-
-function createRequest(formData: FormData) {
-  return new NextRequest('http://localhost/api/upload', {
+// Test helpers
+const createRequest = (body: object = {}, token = 'test-token') => {
+  return new Request('http://localhost/api/upload', {
     method: 'POST',
-    body: formData,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
   });
-}
+};
+
+const setupHandleUploadMock = () => {
+  let capturedCallback: any;
+  vi.mocked(handleUpload).mockImplementation(async (options: any) => {
+    capturedCallback = options.onBeforeGenerateToken;
+    return { type: 'blob.generate-client-token', clientToken: 'test' };
+  });
+  return () => capturedCallback;
+};
 
 describe('POST /api/upload', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    process.env.MASTER_ENCRYPTION_KEY = '0'.repeat(64);
   });
 
-  it('returns 400 when file is missing', async () => {
-    const formData = createFormData();
-    formData.delete('file');
+  it('calls handleUpload with correct configuration', async () => {
+    // Arrange
+    vi.mocked(handleUpload).mockResolvedValue({
+      type: 'blob.generate-client-token',
+      clientToken: 'test-token',
+    } as any);
+    const request = createRequest({ type: 'blob.generate-client-token' });
 
-    const response = await POST(createRequest(formData));
-    const data = await response.json();
+    // Act
+    await POST(request);
 
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('File is required');
+    // Assert
+    expect(handleUpload).toHaveBeenCalledWith(
+      expect.objectContaining({
+        body: expect.any(Object),
+        request: expect.any(Request),
+        onBeforeGenerateToken: expect.any(Function),
+        onUploadCompleted: expect.any(Function),
+      })
+    );
   });
 
-  it('returns 400 when title is missing', async () => {
-    const formData = createFormData();
-    formData.delete('title');
-
-    const response = await POST(createRequest(formData));
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Title is required');
-  });
-
-  it('returns 400 for invalid file type', async () => {
-    const formData = createFormData();
-    formData.set('file', new Blob(['test'], { type: 'text/plain' }), 'test.txt');
-
-    const response = await POST(createRequest(formData));
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toContain('Invalid file type');
-  });
-
-  it('returns 400 for invalid price', async () => {
-    const formData = createFormData({ price: '-5' });
-
-    const response = await POST(createRequest(formData));
-    const data = await response.json();
-
-    expect(response.status).toBe(400);
-    expect(data.error).toBe('Price must be a positive number');
-  });
-
-  it('successfully uploads image and returns blob URLs', async () => {
-    const formData = createFormData({
-      tags: 'nature, landscape',
-      description: 'A beautiful sunset',
+  it('returns error for invalid JSON', async () => {
+    // Arrange
+    const request = new Request('http://localhost/api/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: 'invalid json',
     });
 
-    const response = await POST(createRequest(formData));
-    const data = await response.json();
+    // Act
+    const response = await POST(request);
 
-    expect(response.status).toBe(200);
-    expect(data.id).toBe('test-uuid');
-    expect(data.originalBlobUrl).toBe('https://blob.vercel-storage.com/test');
-    expect(data.watermarkedBlobUrl).toBe('https://blob.vercel-storage.com/test');
+    // Assert
+    expect(response.status).toBe(400);
+  });
+
+  describe('onBeforeGenerateToken', () => {
+    it('validates metadata and returns upload config', async () => {
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+
+      // Act
+      const result = await getCallback()('test.jpg', JSON.stringify(VALID_METADATA));
+
+      // Assert
+      expect(result).toEqual({
+        allowedContentTypes: ['image/jpeg', 'image/png', 'image/webp'],
+        maximumSizeInBytes: 50 * 1024 * 1024,
+        addRandomSuffix: true,
+      });
+    });
+
+    it('throws error when metadata is missing', async () => {
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+
+      // Act & Assert
+      await expect(
+        getCallback()('test.jpg', null)
+      ).rejects.toThrow('Missing upload metadata');
+    });
+
+    it('throws error for invalid metadata', async () => {
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+      const invalidMetadata = { ...VALID_METADATA, title: '' };
+
+      // Act & Assert
+      await expect(
+        getCallback()('test.jpg', JSON.stringify(invalidMetadata))
+      ).rejects.toThrow('Title is required');
+    });
+
+    it('throws error for invalid price', async () => {
+      // Arrange
+      const getCallback = setupHandleUploadMock();
+      await POST(createRequest());
+      const invalidMetadata = { ...VALID_METADATA, price: '-5' };
+
+      // Act & Assert
+      await expect(
+        getCallback()('test.jpg', JSON.stringify(invalidMetadata))
+      ).rejects.toThrow('Price must be greater than zero');
+    });
   });
 });
