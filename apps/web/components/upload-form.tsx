@@ -19,15 +19,6 @@ import {
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
-// Upload progress stages
-const PROGRESS_WATERMARK_START = 10;
-const PROGRESS_UPLOAD_START = 20;
-const PROGRESS_ORIGINAL_START = 20;
-const PROGRESS_ORIGINAL_END = 55;
-const PROGRESS_WATERMARKED_START = 55;
-const PROGRESS_WATERMARKED_END = 90;
-const PROGRESS_COMPLETE_START = 90;
-
 const uploadSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
@@ -154,8 +145,7 @@ export function UploadForm() {
         throw new Error('Failed to get access token');
       }
 
-      // Use cached watermarked preview (already created during file selection)
-      setUploadProgress(PROGRESS_WATERMARK_START);
+      setUploadProgress(20); // Started
 
       // Prepare metadata to send with the upload
       const metadata = {
@@ -168,7 +158,8 @@ export function UploadForm() {
         height: dimensions.height,
       };
 
-      setUploadProgress(PROGRESS_UPLOAD_START);
+      // Watermarked preview already cached during file selection
+      setUploadProgress(40);
 
       // Upload original and watermarked files to Vercel Blob from the client
       const [originalBlob, watermarkedBlob] = await Promise.all([
@@ -176,24 +167,17 @@ export function UploadForm() {
           access: 'public',
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'original', accessToken),
-          onUploadProgress: ({ percentage }) => {
-            const range = PROGRESS_ORIGINAL_END - PROGRESS_ORIGINAL_START;
-            setUploadProgress(PROGRESS_ORIGINAL_START + (percentage / 100) * range);
-          },
         }),
         upload(watermarkedFile.name, watermarkedFile, {
           access: 'public',
           handleUploadUrl: '/api/upload',
           clientPayload: createClientPayload(metadata, 'watermarked', accessToken),
-          onUploadProgress: ({ percentage }) => {
-            const range = PROGRESS_WATERMARKED_END - PROGRESS_WATERMARKED_START;
-            setUploadProgress(PROGRESS_WATERMARKED_START + (percentage / 100) * range);
-          },
         }),
       ]);
 
+      setUploadProgress(80); // Uploads complete
+
       // Save to database
-      setUploadProgress(PROGRESS_COMPLETE_START);
       const completeResponse = await fetch('/api/upload/complete', {
         method: 'POST',
         headers: {
