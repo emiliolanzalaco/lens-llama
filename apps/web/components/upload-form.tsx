@@ -135,19 +135,21 @@ export function UploadForm() {
   const performUpload = async () => {
     if (!file || !walletAddress || !dimensions || !watermarkedFile) return;
 
-    setIsUploading(true);
-    setUploadProgress(10); // Start at 10% to show immediate feedback
+    // Only set initial state if not already uploading (e.g., called from handleUsernameSuccess)
+    setIsUploading((prev) => prev || true);
+    setUploadProgress((prev) => prev > 0 ? prev : 10);
 
     let progressInterval: NodeJS.Timeout | null = null;
 
     try {
-      // Simulate smooth initial progress (10% → 38%)
-      let currentProgress = 10;
+      // Simulate smooth initial progress (→ 38%)
       progressInterval = setInterval(() => {
-        currentProgress += 1;
-        if (currentProgress < 38) {
-          setUploadProgress((prev) => Math.max(prev, currentProgress));
-        }
+        setUploadProgress((prev) => {
+          if (prev < 38) {
+            return prev + 1;
+          }
+          return prev;
+        });
       }, 80); // Update every 80ms for smoother animation
 
       // Get access token for authentication
@@ -171,13 +173,14 @@ export function UploadForm() {
       clearInterval(progressInterval);
       setUploadProgress((prev) => Math.max(prev, 40));
 
-      // Simulate smooth progress during upload (40% → 78%)
-      currentProgress = 40;
+      // Simulate smooth progress during upload (→ 78%)
       progressInterval = setInterval(() => {
-        currentProgress += 2;
-        if (currentProgress < 78) {
-          setUploadProgress((prev) => Math.max(prev, currentProgress));
-        }
+        setUploadProgress((prev) => {
+          if (prev < 78) {
+            return prev + 2;
+          }
+          return prev;
+        });
       }, 200); // Update every 200ms
 
       // Upload original and watermarked files to Vercel Blob from the client
@@ -263,6 +266,10 @@ export function UploadForm() {
       return;
     }
 
+    // Show progress bar immediately
+    setIsUploading(true);
+    setUploadProgress(10);
+
     // Check if user already has a username
     try {
       const checkResponse = await fetch('/api/username/check-user', {
@@ -276,6 +283,8 @@ export function UploadForm() {
 
         if (!hasUsername) {
           // First upload, show username modal before uploading
+          setIsUploading(false);
+          setUploadProgress(0);
           setPendingUpload(true);
           setShowUsernameModal(true);
           return;
