@@ -137,12 +137,12 @@ export function UploadForm() {
 
     // Only set initial state if not already uploading (e.g., called from handleUsernameSuccess)
     setIsUploading((prev) => prev || true);
-    setUploadProgress((prev) => prev > 0 ? prev : 10);
+    setUploadProgress((prev) => Math.max(prev, 0));
 
     let progressInterval: NodeJS.Timeout | null = null;
 
     try {
-      // Simulate smooth initial progress (→ 38%)
+      // Simulate smooth initial progress (0% → 38%)
       progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev < 38) {
@@ -268,7 +268,7 @@ export function UploadForm() {
 
     // Show progress bar immediately
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(0);
 
     // Check if user already has a username
     try {
