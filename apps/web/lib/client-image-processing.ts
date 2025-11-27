@@ -3,12 +3,81 @@
  */
 
 const PREVIEW_SCALE = 0.5; // 50% of original for watermarked preview
+const MAX_DIMENSION = 1200; // Max width or height for watermarked preview
+const MAX_FILE_SIZE = 500 * 1024; // 500KB maximum file size
 const WATERMARK_TEXT = '© Lens Llama';
 const WATERMARK_FONT_SIZE_RATIO = 0.03; // 3% of image width
 
 export interface ImageDimensions {
   width: number;
   height: number;
+}
+
+/**
+ * Calculate preview dimensions using combination of 50% scaling and max dimension limit
+ * Uses whichever produces smaller dimensions
+ */
+function calculatePreviewDimensions(width: number, height: number): ImageDimensions {
+  // Calculate 50% scaled dimensions
+  const scaledWidth = Math.round(width * PREVIEW_SCALE);
+  const scaledHeight = Math.round(height * PREVIEW_SCALE);
+
+  // Calculate max-dimension-limited size
+  const aspectRatio = width / height;
+  let maxWidth, maxHeight;
+
+  if (width > height) {
+    maxWidth = Math.min(width, MAX_DIMENSION);
+    maxHeight = Math.round(maxWidth / aspectRatio);
+  } else {
+    maxHeight = Math.min(height, MAX_DIMENSION);
+    maxWidth = Math.round(maxHeight * aspectRatio);
+  }
+
+  // Use whichever is smaller
+  return {
+    width: Math.min(scaledWidth, maxWidth),
+    height: Math.min(scaledHeight, maxHeight),
+  };
+}
+
+/**
+ * Compress canvas to target file size using iterative quality reduction
+ * Starts at 80% quality and reduces by 10% steps until size target is met
+ */
+async function compressToTargetSize(
+  canvas: HTMLCanvasElement,
+  fileType: string,
+  maxSize: number
+): Promise<Blob> {
+  let quality = 0.8; // Start at 80% instead of 90%
+  const minQuality = 0.5; // Don't go below 50%
+  const qualityStep = 0.1;
+
+  while (quality >= minQuality) {
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob(
+        (b) => (b ? resolve(b) : reject(new Error('Failed to create blob'))),
+        fileType,
+        quality
+      );
+    });
+
+    if (blob.size <= maxSize) {
+      return blob;
+    }
+
+    quality -= qualityStep;
+  }
+
+  // If still too large at minimum quality, return it anyway
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Failed to create blob'))),
+      fileType,
+      minQuality
+    );
+  });
 }
 
 /**
@@ -37,7 +106,7 @@ export async function getImageDimensions(file: File): Promise<ImageDimensions> {
 
 /**
  * Create a watermarked preview version of the image
- * Returns a new File with the watermarked image
+ * Returns a new File with the watermarked image compressed to max 500KB
  */
 export async function createWatermarkedPreview(
   file: File,
@@ -46,14 +115,13 @@ export async function createWatermarkedPreview(
   // Load the image
   const img = await loadImage(file);
 
-  // Calculate preview dimensions (50% of original)
-  const targetWidth = Math.round(dimensions.width * PREVIEW_SCALE);
-  const targetHeight = Math.round(dimensions.height * PREVIEW_SCALE);
+  // Use smart dimension calculation (50% OR max 1200px, whichever is smaller)
+  const targetDims = calculatePreviewDimensions(dimensions.width, dimensions.height);
 
   // Create canvas for watermarked image
   const canvas = document.createElement('canvas');
-  canvas.width = targetWidth;
-  canvas.height = targetHeight;
+  canvas.width = targetDims.width;
+  canvas.height = targetDims.height;
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
@@ -61,10 +129,10 @@ export async function createWatermarkedPreview(
   }
 
   // Draw resized image
-  ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+  ctx.drawImage(img, 0, 0, targetDims.width, targetDims.height);
 
   // Add watermark in tiled pattern
-  const fontSize = Math.round(targetWidth * WATERMARK_FONT_SIZE_RATIO);
+  const fontSize = Math.round(targetDims.width * WATERMARK_FONT_SIZE_RATIO);
   ctx.font = `${fontSize}px Arial`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
   ctx.textAlign = 'center';
@@ -75,26 +143,14 @@ export async function createWatermarkedPreview(
   const spacing = Math.max(textMetrics.width * 1.5, 150);
 
   // Draw watermark in grid pattern
-  for (let y = spacing / 2; y < targetHeight; y += spacing) {
-    for (let x = spacing / 2; x < targetWidth; x += spacing) {
+  for (let y = spacing / 2; y < targetDims.height; y += spacing) {
+    for (let x = spacing / 2; x < targetDims.width; x += spacing) {
       ctx.fillText(WATERMARK_TEXT, x, y);
     }
   }
 
-  // Convert canvas to Blob
-  const blob = await new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (blob) => {
-        if (blob) {
-          resolve(blob);
-        } else {
-          reject(new Error('Failed to create blob'));
-        }
-      },
-      file.type,
-      0.9 // Quality
-    );
-  });
+  // Compress to target size (iteratively reduces quality to fit within 500KB)
+  const blob = await compressToTargetSize(canvas, file.type, MAX_FILE_SIZE);
 
   // Create File from Blob
   const filename = file.name.replace(/(\.[^.]+)$/, '-watermarked$1');
