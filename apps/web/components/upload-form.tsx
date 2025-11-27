@@ -115,16 +115,16 @@ export function UploadForm() {
       const dims = await getImageDimensions(selectedFile);
       setDimensions(dims);
 
-      // Create watermarked preview for display (and cache for upload)
+      // Create watermarked preview for upload (cached)
       const watermarked = await createWatermarkedPreview(selectedFile, dims);
       setWatermarkedFile(watermarked);
 
-      // Create preview from watermarked version
+      // Create preview from ORIGINAL (not watermarked)
       const reader = new FileReader();
       reader.onload = (e) => {
         setPreview(e.target?.result as string);
       };
-      reader.readAsDataURL(watermarked);
+      reader.readAsDataURL(selectedFile);
     } catch (err) {
       console.error('Failed to process image:', err);
       setErrors((prev) => ({ ...prev, file: 'Failed to process image' }));

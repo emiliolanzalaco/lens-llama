@@ -2,7 +2,7 @@
  * Client-side image processing utilities
  */
 
-const PREVIEW_SCALE = 0.5;
+const PREVIEW_SCALE = 0.5; // 50% of original for watermarked preview
 const WATERMARK_TEXT = '© Lens Llama';
 const WATERMARK_FONT_SIZE_RATIO = 0.03; // 3% of image width
 
