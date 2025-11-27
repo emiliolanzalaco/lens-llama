@@ -69,7 +69,6 @@ export function UploadForm() {
   const [errors, setErrors] = useState<FormErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [showUsernameModal, setShowUsernameModal] = useState(false);
-  const [pendingUpload, setPendingUpload] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -194,7 +193,6 @@ export function UploadForm() {
       ]);
 
       clearInterval(progressInterval);
-      progressInterval = null;
       setUploadProgress((prev) => Math.max(prev, 80)); // Uploads complete
 
       // Save to database
@@ -205,15 +203,9 @@ export function UploadForm() {
           Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({
+          ...metadata,
           originalUrl: originalBlob.url,
           watermarkedUrl: watermarkedBlob.url,
-          title: metadata.title,
-          description: metadata.description,
-          tags: metadata.tags,
-          price: metadata.price,
-          photographerAddress: metadata.photographerAddress,
-          width: metadata.width,
-          height: metadata.height,
         }),
       });
 
@@ -281,7 +273,6 @@ export function UploadForm() {
           // First upload, show username modal before uploading
           setIsUploading(false);
           setUploadProgress(0);
-          setPendingUpload(true);
           setShowUsernameModal(true);
           return;
         }
@@ -297,7 +288,6 @@ export function UploadForm() {
 
   const handleUsernameSuccess = async (username: string) => {
     setShowUsernameModal(false);
-    setPendingUpload(false);
 
     // Set upload state and perform the upload
     setIsUploading(true);
