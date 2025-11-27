@@ -135,10 +135,6 @@ export function UploadForm() {
   const performUpload = async () => {
     if (!file || !walletAddress || !dimensions || !watermarkedFile) return;
 
-    // Only set initial state if not already uploading (e.g., called from handleUsernameSuccess)
-    setIsUploading((prev) => prev || true);
-    setUploadProgress((prev) => Math.max(prev, 0));
-
     let progressInterval: NodeJS.Timeout | null = null;
 
     try {
@@ -303,7 +299,9 @@ export function UploadForm() {
     setShowUsernameModal(false);
     setPendingUpload(false);
 
-    // Now perform the upload
+    // Set upload state and perform the upload
+    setIsUploading(true);
+    setUploadProgress(0);
     await performUpload();
   };
 
