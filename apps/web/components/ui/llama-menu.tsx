@@ -38,7 +38,7 @@ export function LlamaMenu() {
     const showHomeButton = pathname === '/upload' || pathname.startsWith('/images/');
 
     return (
-        <div ref={menuRef} className="fixed bottom-4 left-8 z-50 flex flex-col items-start gap-2">
+        <div ref={menuRef} onMouseLeave={() => setIsOpen(false)} className="fixed bottom-4 left-8 z-50 flex flex-col items-start gap-2">
             {/* Menu Content - Expands Upwards */}
             <div
                 className={cn(
@@ -118,7 +118,6 @@ export function LlamaMenu() {
             <div className="group relative h-[80px] w-[80px]">
                 {/* Main Llama Button */}
                 <button
-                    onClick={() => setIsOpen(!isOpen)}
                     onMouseEnter={() => setIsOpen(true)}
                     className={cn(
                         "relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-black shadow-2xl transition-transform duration-300 group-hover:scale-95 active:scale-90 ring-4 ring-white/10",
@@ -126,7 +125,7 @@ export function LlamaMenu() {
                     )}
                 >
                     <img
-                        src="/lama_head.png"
+                        src="/llama_head.png"
                         alt="Llama Menu"
                         className={cn(
                             "h-full w-full object-cover transition-all duration-500",
