@@ -4,7 +4,7 @@
 
 const PREVIEW_SCALE = 0.4; // 40% of original - smaller preview
 const MAX_DIMENSION = 800; // Max 800px - much smaller for intentionally degraded preview
-const MAX_FILE_SIZE = 200 * 1024; // 200KB maximum - very aggressive compression
+const PREVIEW_QUALITY = 0.3; // 30% quality - intentionally degraded
 const WATERMARK_TEXT = '© Lens Llama';
 const WATERMARK_FONT_SIZE_RATIO = 0.04; // 4% of image width - larger watermark
 
@@ -42,40 +42,18 @@ function calculatePreviewDimensions(width: number, height: number): ImageDimensi
 }
 
 /**
- * Compress canvas to target file size using iterative quality reduction
+ * Compress canvas with fixed low quality
  * Intentionally degrades quality to encourage purchasing full-resolution originals
  */
-async function compressToTargetSize(
+async function compressToLowQuality(
   canvas: HTMLCanvasElement,
-  fileType: string,
-  maxSize: number
+  fileType: string
 ): Promise<Blob> {
-  let quality = 0.5; // Start at 50% - low quality preview
-  const minQuality = 0.2; // Can go as low as 20% for very degraded preview
-  const qualityStep = 0.1;
-
-  while (quality >= minQuality) {
-    const blob = await new Promise<Blob>((resolve, reject) => {
-      canvas.toBlob(
-        (b) => (b ? resolve(b) : reject(new Error('Failed to create blob'))),
-        fileType,
-        quality
-      );
-    });
-
-    if (blob.size <= maxSize) {
-      return blob;
-    }
-
-    quality -= qualityStep;
-  }
-
-  // If still too large at minimum quality, return it anyway
   return new Promise<Blob>((resolve, reject) => {
     canvas.toBlob(
       (b) => (b ? resolve(b) : reject(new Error('Failed to create blob'))),
       fileType,
-      minQuality
+      PREVIEW_QUALITY
     );
   });
 }
@@ -149,8 +127,8 @@ export async function createWatermarkedPreview(
     }
   }
 
-  // Compress to target size (iteratively reduces quality to fit within 500KB)
-  const blob = await compressToTargetSize(canvas, file.type, MAX_FILE_SIZE);
+  // Compress with fixed low quality for intentionally degraded preview
+  const blob = await compressToLowQuality(canvas, file.type);
 
   // Create File from Blob
   const filename = file.name.replace(/(\.[^.]+)$/, '-watermarked$1');
