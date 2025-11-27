@@ -6,7 +6,7 @@ const TEST_IMAGE_WIDTH = 3200;
 const TEST_IMAGE_HEIGHT = 2400;
 const EXPECTED_PREVIEW_WIDTH = 800; // Max dimension limit
 const EXPECTED_PREVIEW_HEIGHT = 600; // Maintains aspect ratio
-const PREVIEW_QUALITY = 0.5;
+const PREVIEW_QUALITY = 0.7;
 
 // Mock ImageBitmap
 class MockImageBitmap {
@@ -216,7 +216,7 @@ describe('client-image-processing', () => {
       expect(mockContext.fillText.mock.calls.length).toBeGreaterThan(1);
     });
 
-    it('compresses image to 50% quality', async () => {
+    it('compresses image to 70% quality', async () => {
       // Arrange
       const testFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
       const mockBitmap = new MockImageBitmap(TEST_IMAGE_WIDTH, TEST_IMAGE_HEIGHT);
