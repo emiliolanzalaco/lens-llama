@@ -30,7 +30,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="w-full px-2 md:px-4 mx-auto pb-20">
+      <div className="w-full px-2 pt-2 md:px-4 mx-auto pb-20">
         {isLoading ? (
           <div className="columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-2">
             {Array.from({ length: 20 }).map((_, i) => (

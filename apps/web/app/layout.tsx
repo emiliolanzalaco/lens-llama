@@ -3,8 +3,7 @@ import { Inter as FontSans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { PrivyProvider } from "@/components/providers/privy-provider";
-
-import { AuthBanner } from "@/components/auth-banner";
+import { LlamaMenu } from "@/components/ui/llama-menu";
 
 const fontSans = FontSans({
   subsets: ["latin"],
@@ -30,8 +29,8 @@ export default function RootLayout({
         )}
       >
         <PrivyProvider>
-          <AuthBanner />
           {children}
+          <LlamaMenu />
         </PrivyProvider>
       </body>
     </html>
