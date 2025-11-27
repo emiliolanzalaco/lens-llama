@@ -109,7 +109,7 @@ export async function createWatermarkedPreview(
   // Draw resized image
   ctx.drawImage(img, 0, 0, targetDims.width, targetDims.height);
 
-  // Add watermark in tiled pattern
+  // Add watermark in tiled diagonal pattern
   const fontSize = Math.round(targetDims.width * WATERMARK_FONT_SIZE_RATIO);
   ctx.font = `${fontSize}px Arial`;
   ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
@@ -120,10 +120,16 @@ export async function createWatermarkedPreview(
   const textMetrics = ctx.measureText(WATERMARK_TEXT);
   const spacing = Math.max(textMetrics.width * 1.5, 150);
 
-  // Draw watermark in grid pattern
+  // Draw watermark in grid pattern with diagonal rotation
+  const angle = -45 * (Math.PI / 180); // -45 degrees in radians
+
   for (let y = spacing / 2; y < targetDims.height; y += spacing) {
     for (let x = spacing / 2; x < targetDims.width; x += spacing) {
-      ctx.fillText(WATERMARK_TEXT, x, y);
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(angle);
+      ctx.fillText(WATERMARK_TEXT, 0, 0);
+      ctx.restore();
     }
   }
 
