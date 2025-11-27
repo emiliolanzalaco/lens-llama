@@ -4,7 +4,7 @@
 
 const PREVIEW_SCALE = 0.4; // 40% of original - smaller preview
 const MAX_DIMENSION = 800; // Max 800px - much smaller for intentionally degraded preview
-const PREVIEW_QUALITY = 0.33; // 33% quality - degraded to encourage purchases
+const PREVIEW_QUALITY = 0.5; // 50% quality - degraded to encourage purchases
 const WATERMARK_TEXT = '© Lens Llama';
 const WATERMARK_FONT_SIZE_RATIO = 0.04; // 4% of image width - larger watermark
 
