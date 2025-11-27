@@ -1,7 +1,8 @@
 name: CI
 
 env:
-  NEXT_PUBLIC_PRIVY_APP_ID: cmiadqb0l00xzky0cfbtgj19o
+  NEXT_PUBLIC_PRIVY_APP_ID: ${{ secrets.NEXT_PUBLIC_PRIVY_APP_ID }}
+  PRIVY_APP_SECRET: ${{ secrets.PRIVY_APP_SECRET }}
   POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
 
 on:
