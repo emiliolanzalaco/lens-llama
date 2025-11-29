@@ -51,7 +51,7 @@ graph TB
 sequenceDiagram
     actor User
     participant Client
-    participant Auth as Privy Auth
+    participant Privy
     participant API as /api/upload
     participant Blob as Vercel Blob
     participant Complete as /api/upload/complete
@@ -61,11 +61,13 @@ sequenceDiagram
     Client->>Client: Validate & process image
 
     User->>Client: Submit form
-    Client->>Auth: Get access token
-    Auth-->>Client: JWT token
+    Client->>Privy: Get access token
+    Privy-->>Client: JWT token
 
     Client->>API: POST with metadata + token
-    API->>API: Verify JWT & validate
+    API->>Privy: Verify JWT
+    Privy-->>API: Verified user
+    API->>API: Validate metadata
     API-->>Client: Upload token
 
     par Parallel uploads
@@ -75,40 +77,13 @@ sequenceDiagram
     Blob-->>Client: Blob URLs
 
     Client->>Complete: POST URLs + metadata + token
-    Complete->>Complete: Verify token
+    Complete->>Privy: Verify JWT
+    Privy-->>Complete: Verified user
     Complete->>DB: Save image record
     DB-->>Complete: Image ID
     Complete-->>Client: Success
 
     Client->>User: Redirect to homepage
-```
-
-## Authentication Flow
-
-```mermaid
-flowchart TD
-    Start[User visits site] --> NeedsAuth{Requires<br/>authentication?}
-    NeedsAuth -->|No| Browse[Browse images]
-    NeedsAuth -->|Yes| ShowLogin[Show Privy login]
-
-    ShowLogin --> LoginMethod{Choose<br/>login method}
-
-    LoginMethod -->|Email| EmailAuth[Enter email]
-    LoginMethod -->|Google| GoogleAuth[Google OAuth]
-    LoginMethod -->|Wallet| WalletAuth[Connect wallet]
-
-    EmailAuth --> CreateWallet[Create embedded wallet]
-    GoogleAuth --> CreateWallet
-    WalletAuth --> ExternalWallet[Use external wallet]
-
-    CreateWallet --> GenerateToken[Generate JWT token]
-    ExternalWallet --> GenerateToken
-
-    GenerateToken --> Authenticated[Authenticated]
-    Authenticated --> PerformAction[Upload/Purchase]
-
-    style CreateWallet fill:#9f9,stroke:#333,stroke-width:2px
-    style Authenticated fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
 ## Tech Stack
