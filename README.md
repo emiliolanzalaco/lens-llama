@@ -111,68 +111,6 @@ flowchart TD
     style Authenticated fill:#9f9,stroke:#333,stroke-width:2px
 ```
 
-## Username Claim Flow
-
-```mermaid
-sequenceDiagram
-    actor User
-    participant Form as Upload Form
-    participant Check as /api/username/check-user
-    participant Modal as Username Modal
-    participant Claim as /api/username/claim
-    participant DB as Database
-
-    User->>Form: First upload submission
-    Form->>Check: POST {userAddress}
-    Check->>DB: SELECT username WHERE userAddress
-    DB-->>Check: null (no username)
-    Check-->>Form: {hasUsername: false}
-
-    Form->>Modal: Show username claim modal
-    Modal->>User: Display username input
-    User->>Modal: Enter username
-    Modal->>Claim: POST {username, userAddress, token}
-
-    Claim->>Claim: Verify JWT token
-    Claim->>DB: Check username availability
-    DB-->>Claim: Available
-    Claim->>DB: INSERT INTO usernames
-    DB-->>Claim: Success
-
-    Claim-->>Modal: {success: true}
-    Modal->>Form: Close modal
-    Form->>Form: Continue with upload
-```
-
-## Data Model
-
-```mermaid
-erDiagram
-    IMAGES ||--o| USERNAMES : "photographerAddress"
-
-    IMAGES {
-        uuid id PK
-        text originalBlobUrl
-        text watermarkedBlobUrl
-        varchar photographerAddress
-        varchar photographerUsername
-        varchar title
-        text description
-        text[] tags
-        decimal priceUsdc
-        int width
-        int height
-        timestamp createdAt
-    }
-
-    USERNAMES {
-        uuid id PK
-        varchar userAddress UK
-        varchar username UK
-        timestamp createdAt
-    }
-```
-
 ## Tech Stack
 
 ### Frontend
