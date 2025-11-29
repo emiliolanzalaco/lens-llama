@@ -50,45 +50,37 @@ graph TB
 ```mermaid
 sequenceDiagram
     actor User
-    participant Form as Upload Form
+    participant Client
     participant Auth as Privy Auth
-    participant Processing as Image Processing
     participant API as /api/upload
     participant Blob as Vercel Blob
     participant Complete as /api/upload/complete
     participant DB as Database
 
-    User->>Form: Select image file
-    Form->>Form: Validate file type & size
-    Form->>Processing: Extract dimensions
-    Processing-->>Form: Width & height
-    Form->>Processing: Create watermarked version
-    Processing-->>Form: Watermarked file
+    User->>Client: Select image file
+    Client->>Client: Validate & process image
 
-    User->>Form: Submit form
-    Form->>Auth: Get access token
-    Auth-->>Form: JWT token
+    User->>Client: Submit form
+    Client->>Auth: Get access token
+    Auth-->>Client: JWT token
 
-    Form->>API: POST with metadata + token
-    API->>API: Verify JWT token
-    API->>API: Validate metadata
-    API->>API: Check wallet matches photographer
-    API-->>Form: Upload token
+    Client->>API: POST with metadata + token
+    API->>API: Verify JWT & validate
+    API-->>Client: Upload token
 
     par Parallel uploads
-        Form->>Blob: Upload original
-        Form->>Blob: Upload watermarked
+        Client->>Blob: Upload original
+        Client->>Blob: Upload watermarked
     end
-    Blob-->>Form: Blob URLs
+    Blob-->>Client: Blob URLs
 
-    Form->>Complete: POST URLs + metadata + token
+    Client->>Complete: POST URLs + metadata + token
     Complete->>Complete: Verify token
-    Complete->>DB: Lookup username
-    Complete->>DB: INSERT image record
+    Complete->>DB: Save image record
     DB-->>Complete: Image ID
-    Complete-->>Form: Success
+    Complete-->>Client: Success
 
-    Form->>User: Redirect to homepage
+    Client->>User: Redirect to homepage
 ```
 
 ## Authentication Flow
