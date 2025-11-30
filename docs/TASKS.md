@@ -1,423 +1,433 @@
 # LensLlama Development Tasks
 
-## How to Use
+## Current Status
 
-**For Engineers:**
-- Claim a task by adding your name and creating the branch
-- Update checkboxes as you progress: `[ ]` → `[x]`
-- Commit this file to keep others updated
-- Pull before starting to see latest assignments
+**✅ Core Platform Complete:**
+- Privy authentication (email, Google, wallet)
+- Upload flow with client-side watermarking
+- Vercel Blob storage (original + watermarked)
+- Image browsing and detail pages
+- x402 payment integration (Base Sepolia testnet)
+- Username system
+- Database schema and migrations
 
-**For AI Agents:**
-- **TECHNICAL_SPEC is your primary reference** - it contains all architecture, schemas, and implementation details
-- Use Context7 MCP for library documentation (Privy, Drizzle, Viem, Sharp, Next.js)
-- Use Vercel MCP for deployment and debugging
-- Do not reference AI/Claude in commits or PRs - author as the GitHub user
-
----
-
-## Workflow
-
-**Development cycle:** Write tests → Implement → Run tests → Build locally → Push PR
-
-**Commits:** Use conventional commits (feat:, fix:, test:, docs:, refactor:). Keep messages concise and single-line.
-
-**Authorship:** All commits authored by the engineer. No AI attribution.
+**🎯 Launch Goal:** 4-6 week MVP with core photographer value prop
 
 ---
 
-## Testing Guidelines
+## Outstanding MVP Tasks
+
+### Critical Path to Launch
+
+#### 1. Base Mainnet Migration
+**Priority:** P0 (blocks real transactions)
+
+- [ ] Update network constants to Base mainnet
+  - [ ] Change `NETWORK = 'base'` in `apps/web/lib/x402/constants.ts`
+  - [ ] Update `USDC_ADDRESS = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'`
+- [ ] Update viem chain imports
+  - [ ] Replace `baseSepolia` with `base` in `use-x402-payment.ts`
+  - [ ] Update chainId to `8453`
+  - [ ] Update hardcoded `network: 'base-sepolia'` strings
+- [ ] Configure facilitator for Base mainnet
+  - [ ] Update facilitator RPC endpoint to `https://mainnet.base.org`
+  - [ ] Fund facilitator wallet with mainnet ETH for gas
+  - [ ] Test facilitator /verify and /settle endpoints
+- [ ] Update environment variables
+  - [ ] `NEXT_PUBLIC_BASE_RPC_URL` → mainnet RPC
+  - [ ] Verify all Base-related configs
+- [ ] Testing
+  - [ ] Test full payment flow on mainnet
+  - [ ] Verify USDC transfers on Basescan
+  - [ ] Test with small amounts first ($1-5)
+
+**Branch:** `feature/base-mainnet-migration`
+
+---
+
+#### 2. C2PA Credentialing
+**Priority:** P0 (core value prop - proof of ownership)
+
+- [ ] Research C2PA implementation options
+  - [ ] Evaluate `c2pa-node` library
+  - [ ] Determine client-side vs server-side approach
+  - [ ] Decide on signing key management
+- [ ] Implement C2PA manifest creation
+  - [ ] Add photographer wallet address to credentials
+  - [ ] Add x402 licensing URL
+  - [ ] Add upload timestamp
+  - [ ] Sign manifest with platform key
+- [ ] Integrate into upload flow
+  - [ ] Add C2PA manifest to original image before Blob upload
+  - [ ] Preserve C2PA data in watermarked preview
+  - [ ] Store C2PA signature in database (optional)
+- [ ] Add C2PA verification endpoint
+  - [ ] Create `/api/images/[id]/verify` route
+  - [ ] Parse and validate C2PA manifest
+  - [ ] Return credential details to UI
+- [ ] UI indicators
+  - [ ] Show "Verified" badge on images with valid C2PA
+  - [ ] Display credential details on image page
+  - [ ] Add "What is this?" explanation modal
+- [ ] Testing
+  - [ ] Test C2PA creation and verification
+  - [ ] Verify credentials survive image processing
+  - [ ] Test with multiple image formats
+
+**Branch:** `feature/c2pa-credentials`
+
+**Reference:** https://c2pa.org/specifications/specifications/1.0/specs/C2PA_Specification.html
+
+---
+
+#### 3. Infringement Search (The Hook)
+**Priority:** P0 (acquisition engine)
+
+- [ ] Research reverse image search APIs
+  - [ ] Evaluate Google Vision API
+  - [ ] Evaluate TinEye API
+  - [ ] Compare pricing (~$0.02/search target)
+  - [ ] Choose provider
+- [ ] Implement search service
+  - [ ] Create `/lib/infringement/search.ts` module
+  - [ ] Implement API client for chosen provider
+  - [ ] Add rate limiting
+  - [ ] Add result caching (avoid duplicate searches)
+- [ ] Create search API endpoint
+  - [ ] POST `/api/infringement/search` route
+  - [ ] Require authentication
+  - [ ] Accept image ID or upload
+  - [ ] Return list of URLs where image found
+  - [ ] Track searches in database for monitoring unlock
+- [ ] Search UI
+  - [ ] Add "Check for theft" button on image detail page
+  - [ ] Show search progress/loading state
+  - [ ] Display results: URL, thumbnail, "Send DMCA" action
+  - [ ] Show "No infringements found" success state
+  - [ ] Track search history for photographer
+- [ ] Free tier implementation
+  - [ ] Allow 3 free searches per photographer
+  - [ ] Show "X searches remaining" counter
+  - [ ] Upsell to unlock more via sales
+- [ ] Testing
+  - [ ] Test with known infringing URLs
+  - [ ] Test with clean images (no results)
+  - [ ] Test rate limits and caching
+
+**Branch:** `feature/infringement-search`
+
+---
+
+#### 4. DMCA Template Generator
+**Priority:** P1 (conversion tool - turns anger into action)
+
+- [ ] Create DMCA template service
+  - [ ] Build `/lib/infringement/dmca-template.ts`
+  - [ ] Template with photographer details, image URL, infringing URL
+  - [ ] Include C2PA proof if available
+  - [ ] Add platform contact info as service provider
+- [ ] DMCA endpoint
+  - [ ] POST `/api/infringement/dmca` route
+  - [ ] Accept photographer info + infringement details
+  - [ ] Generate filled template
+  - [ ] Return as downloadable .txt or PDF
+- [ ] UI integration
+  - [ ] "Send DMCA" button next to each search result
+  - [ ] Modal with form: photographer name, email, address (required for DMCA)
+  - [ ] Show generated DMCA in preview
+  - [ ] Copy to clipboard button
+  - [ ] Download as file button
+  - [ ] Instructions: "Send this to [platform]'s DMCA agent"
+- [ ] "Convert to customer" flow
+  - [ ] Alternative action: "Offer license" button
+  - [ ] Pre-fill email template: "I found my photo on your site. License it here: [link]"
+  - [ ] Track conversions (infringement → sale)
+- [ ] Testing
+  - [ ] Validate DMCA template against legal requirements
+  - [ ] Test with various platforms (Medium, WordPress, etc.)
+  - [ ] User test with photographers
+
+**Branch:** `feature/dmca-generator`
+
+**Legal Reference:** 17 U.S.C. § 512(c)(3)
+
+---
+
+#### 5. Photographer Storefronts
+**Priority:** P1 (photographers bring their own traffic)
+
+- [ ] Create storefront page
+  - [ ] New route: `/photographer/[usernameOrAddress]`
+  - [ ] Fetch all images by photographer
+  - [ ] Display in grid (similar to homepage)
+  - [ ] Show photographer name/username at top
+  - [ ] Show total images count
+  - [ ] Add shareable URL
+- [ ] Storefront API
+  - [ ] GET `/api/photographers/[id]/images` endpoint
+  - [ ] Support lookup by username or wallet address
+  - [ ] Return all public images
+  - [ ] Include photographer metadata
+- [ ] Shareable features
+  - [ ] Meta tags for social sharing (Open Graph)
+  - [ ] "Share storefront" button (copy link)
+  - [ ] QR code generator for storefront URL
+- [ ] Discovery
+  - [ ] Add "Visit photographer" link on image detail pages
+  - [ ] Link from username on homepage cards
+- [ ] Testing
+  - [ ] Test with photographers with 1, 10, 50+ images
+  - [ ] Test username vs wallet address routing
+  - [ ] Test social share previews
+
+**Branch:** `feature/photographer-storefronts`
+
+---
+
+#### 6. Sales-Based Monitoring Tiers
+**Priority:** P2 (retention mechanism)
+
+- [ ] Add monitoring status to database
+  - [ ] Add `total_sales_usdc` column to photographers table (or compute from licenses)
+  - [ ] Add `monitoring_tier` enum: none, weekly, daily
+  - [ ] Add `last_monitored_at` timestamp per image
+- [ ] Tier calculation service
+  - [ ] Create `/lib/monitoring/tier-calculator.ts`
+  - [ ] $0-49: no monitoring
+  - [ ] $50-199: weekly monitoring on sold images only
+  - [ ] $200+: daily monitoring on full portfolio
+- [ ] Monitoring job scheduler
+  - [ ] Set up cron job or scheduled task
+  - [ ] Query images due for monitoring based on tier
+  - [ ] Run infringement search for each
+  - [ ] Store results in database
+  - [ ] Email photographer if new infringements found
+- [ ] Monitoring dashboard
+  - [ ] Add `/dashboard/monitoring` page
+  - [ ] Show current tier and sales progress
+  - [ ] Display tier unlock roadmap: "Sell $X more to unlock weekly monitoring"
+  - [ ] Show monitoring history (scans performed, infringements found)
+  - [ ] List active infringements with DMCA actions
+- [ ] Email notifications
+  - [ ] Set up email service (Resend/SendGrid)
+  - [ ] Template: "New infringement detected"
+  - [ ] Include infringing URL and DMCA action link
+- [ ] Cost management
+  - [ ] Track search API costs in database
+  - [ ] Alert if costs exceed 20% of platform fee revenue
+  - [ ] Add ability to pause monitoring if needed
+- [ ] Testing
+  - [ ] Test tier calculations
+  - [ ] Test monitoring job execution
+  - [ ] Test email delivery
+  - [ ] Monitor API costs in production
+
+**Branch:** `feature/sales-monitoring`
+
+---
+
+### Polish & Launch Prep
+
+#### 7. Landing Page
+**Priority:** P2 (acquisition)
+
+- [ ] Create marketing landing page at `/`
+  - [ ] Hero: "Your photos. Your income. Protected."
+  - [ ] Value props: 90% revenue, x402 payments, infringement protection
+  - [ ] "Upload your first photo" CTA
+  - [ ] "See where your photos are stolen" free search CTA
+  - [ ] Photographer testimonials (add after beta)
+- [ ] Move image grid to `/browse` or `/marketplace`
+- [ ] Add navigation
+  - [ ] Header: Logo, Browse, Upload, Dashboard, Login
+  - [ ] Footer: Docs, Contact, Terms, Privacy
+
+**Branch:** `feature/landing-page`
+
+---
+
+#### 8. Photographer Dashboard
+**Priority:** P2 (engagement)
+
+- [ ] Create `/dashboard` page
+  - [ ] Sales summary: total earnings, image count, license count
+  - [ ] Revenue chart (sales over time)
+  - [ ] Recent licenses table
+  - [ ] Monitoring tier status
+  - [ ] Quick actions: Upload, Check infringement
+- [ ] Dashboard API
+  - [ ] GET `/api/dashboard/stats` endpoint
+  - [ ] Return sales totals, license count, monitoring status
+  - [ ] Calculate from licenses table
+
+**Branch:** `feature/dashboard`
+
+---
+
+#### 9. Error Handling & Polish
+**Priority:** P2 (UX)
+
+- [ ] Add error boundaries to key pages
+- [ ] User-friendly error messages
+  - [ ] Payment failures: "Transaction failed. Please try again."
+  - [ ] Upload failures: "Upload failed. Check your connection."
+  - [ ] Search failures: "Search unavailable. Try again later."
+- [ ] Loading states for all async operations
+- [ ] Toast notifications (Sonner)
+  - [ ] Success: "Image uploaded successfully"
+  - [ ] Error: "Payment failed"
+  - [ ] Info: "Checking for infringements..."
+- [ ] Empty states
+  - [ ] No images: "Upload your first photo"
+  - [ ] No infringements: "No theft detected!"
+  - [ ] No sales: "Share your storefront to get started"
+
+**Branch:** `polish/ux-improvements`
+
+---
+
+#### 10. Production Deployment
+**Priority:** P0 (launch blocker)
+
+- [ ] Environment setup
+  - [ ] Configure production environment variables in Vercel
+  - [ ] Set mainnet RPC URLs
+  - [ ] Configure production database
+  - [ ] Set up production facilitator
+- [ ] Security audit
+  - [ ] Review all API routes for auth checks
+  - [ ] Verify payment verification logic
+  - [ ] Check for SQL injection vulnerabilities
+  - [ ] Rate limiting on expensive endpoints
+- [ ] Monitoring
+  - [ ] Set up Vercel Analytics
+  - [ ] Add error tracking (Sentry)
+  - [ ] Set up uptime monitoring
+  - [ ] Alert on facilitator failures
+- [ ] Deploy
+  - [ ] Deploy to Vercel production
+  - [ ] Verify all features work in production
+  - [ ] Test payment flow end-to-end
+  - [ ] Smoke test: upload, search, purchase, download
+- [ ] Post-deploy
+  - [ ] Monitor error rates
+  - [ ] Check API costs (infringement search)
+  - [ ] Watch facilitator gas usage
+
+**Branch:** `deploy/production`
+
+---
+
+## Post-Launch (Phase 2)
+
+### Revenue Split Smart Contract
+- [ ] Deploy RevenueDistributor.sol to Base mainnet
+- [ ] Implement 90/10 split: photographer/platform
+- [ ] Integrate into payment flow (replace direct transfers)
+- [ ] Update facilitator to call contract
+
+### MCP Server (Agent Commerce)
+- [ ] Create LensLlama MCP server
+- [ ] Implement `search_stock_photos` tool
+- [ ] Implement `license_image` tool
+- [ ] Add x402 payment handling for agents
+- [ ] Publish to MCP registry
+
+### AI-Powered Features
+- [ ] Automatic tagging on upload (Vision API)
+- [ ] Smart search (semantic similarity)
+- [ ] Suggested pricing based on image quality
+
+---
+
+## Testing Strategy
 
 ### Test Pyramid
-
 ```
       /\        E2E (few)
      /  \       - Full purchase flow
-    /----\      - Upload to download
+    /----\      - Upload → browse → purchase → download
    /      \
   /--------\    Integration (some)
- /          \   - API endpoints
-/------------\  - Database operations
+ /          \   - API endpoints with database
+/------------\  - Payment flow with facilitator
       ||
      ====       Unit (many)
-                - Encryption/decryption
                 - Image processing
                 - Utilities
+                - Business logic
 ```
 
-**Target coverage:** 70% unit, 20% integration, 10% E2E
+### Key Test Scenarios
+1. **Happy path:** Upload → watermark → list → purchase → download
+2. **Infringement flow:** Upload → search → find theft → generate DMCA
+3. **Monitoring unlock:** Make sales → unlock tier → receive alerts
+4. **Payment edge cases:** Insufficient funds, invalid signature, timeout
 
-### Black-Box Testing
+---
 
-Test inputs and outputs, not implementation details.
+## Commands
 
-```typescript
-// ✅ GOOD: Tests behavior
-it('encrypts and decrypts back to original', async () => {
-  const input = Buffer.from('test data')
-  const key = generateKey()
-  const encrypted = await encryptImage(input, key)
-  const decrypted = await decryptImage(encrypted, key)
-  expect(decrypted).toEqual(input)
-})
-
-// ❌ BAD: Tests implementation
-it('uses AES-256-CBC cipher', async () => {
-  const spy = jest.spyOn(crypto, 'createCipheriv')
-  await encryptImage(input, key)
-  expect(spy).toHaveBeenCalledWith('aes-256-cbc', ...)
-})
+```bash
+pnpm dev                 # Start dev server
+pnpm build               # Production build
+pnpm test                # Run all tests
+pnpm test:unit           # Unit tests only
+pnpm test:integration    # Integration tests only
+pnpm lint                # Run linter
+pnpm db:migrate          # Run database migrations
+pnpm db:studio           # Open Drizzle Studio
 ```
 
-**Key principles:**
-- Test the contract, not the code
-- Assert on outputs only (return values, HTTP responses, rendered UI)
-- Avoid mocking internals
-- Tests should survive refactoring
+---
 
-### Test File Location
+## Key Documentation
 
-**Colocate tests with the code they test.** Do not use a separate `__tests__` folder.
+- **VALUE_PROPOSITION.md** - Business model and product vision
+- **TECHNICAL_SPEC.md** - Architecture and implementation details
+- **STYLE_GUIDE.md** - UI/UX design system
+- **CLAUDE.md** - Code principles and guidelines
 
+---
+
+## Environment Variables
+
+### Required for Production
 ```
-components/
-  ImageCard.tsx
-  ImageCard.test.tsx    ✅ colocated
+# Database
+POSTGRES_URL
 
-lib/
-  encryption.ts
-  encryption.test.ts    ✅ colocated
+# Auth
+NEXT_PUBLIC_PRIVY_APP_ID
+PRIVY_APP_SECRET
 
-app/api/images/
-  route.ts
-  route.test.ts         ✅ colocated
+# Storage
+BLOB_READ_WRITE_TOKEN
+
+# x402 Payment
+FACILITATOR_URL
+NEXT_PUBLIC_BASE_RPC_URL
+
+# Infringement Search
+GOOGLE_VISION_API_KEY (or TinEye API key)
+
+# Email (for monitoring alerts)
+RESEND_API_KEY or SENDGRID_API_KEY
+
+# Monitoring
+SENTRY_DSN
 ```
-
-Naming: `[filename].test.ts` or `[filename].test.tsx`
-
----
-
-## Phase 1: Foundation
-
-### 1.1 Project Setup
-- [x] Initialize Next.js 14 with App Router, TypeScript, TailwindCSS
-- [x] Configure ESLint and Prettier
-- [x] Set up Jest or Vitest for testing
-- [x] Create folder structure: app/, lib/, components/, db/
-- [x] Set up .env.example with all required variables
-- [x] Configure GitHub Actions for CI (lint, types, tests, build)
-
-**Branch:** `setup/project-init` | **Assigned:** _complete_
-
-### 1.2 Database Schema
-- [x] Install and configure Drizzle ORM
-- [x] Create images table schema (see TECHNICAL_SPEC for fields including encryption_key)
-- [x] Implement encryption-at-rest for encryption_key field using MASTER_ENCRYPTION_KEY
-- [x] Create licenses table schema
-- [x] Write migration files
-- [x] Create required indexes (photographer lookup, license verification)
-- [x] Write integration tests for database operations
-- [x] Test connection to Neon Postgres
-
-**Branch:** `setup/database` | **Assigned:** _complete_
-
-### 1.3 Privy Authentication
-- [x] Install Privy SDK (@privy-io/react-auth)
-- [x] Create PrivyProvider wrapper component
-- [x] Configure login methods: email, Google, external wallet
-- [x] Enable embedded wallet creation for email/Google users
-- [x] Simple UI using ShadcnCn/ui MCP components for authentication form
-- [x] Create useAuth hook exposing user and wallet
-- [x] Write tests for auth state management
-- [x] Manually test login/logout flow
-
-**Branch:** `feature/privy-auth` | **Assigned:** _in progress_
-
----
-
-## Phase 2: Storage & Upload
-
-### 2.1 Synapse SDK Integration
-- [x] Install @filoz/synapse-sdk
-- [x] Create Synapse client singleton with private key config
-- [x] Implement upload function (see TECHNICAL_SPEC for encryption flow)
-- [x] Implement download function with decryption
-- [x] Add error handling and retry logic for network failures
-- [x] Write unit tests for client configuration
-- [ ] Test full upload → download round-trip with Filecoin testnet
-
-**Branch:** `feature/synapse-storage` | **Assigned:** _in progress_
-
-### 2.2 Image Processing
-- [x] Install Sharp
-- [x] Create watermark function: diagonal "LensLlama" text, semi-transparent
-- [x] Create resize function: max 1200px width, maintain aspect ratio
-- [x] Create AES-256-CBC encryption utility (see TECHNICAL_SPEC for code)
-- [x] Create matching decryption utility
-- [x] Write unit tests for each function
-- [x] Test with JPEG, PNG, WebP formats
-- [x] Test edge cases: very large images, small images
-
-**Branch:** `feature/image-processing` | **Assigned:** _complete_
-
-### 2.3 Upload API Endpoint
-- [x] Create POST /api/upload route handler
-- [x] Validate file: size (max 20MB), format (JPEG/PNG/WebP)
-- [x] Validate request body with Zod schema (title, price, photographerAddress, tags)
-- [x] Generate watermarked preview with Sharp
-- [x] Encrypt full resolution with AES-256
-- [x] Upload both to Filecoin via Synapse SDK
-- [x] Save to database: CIDs, encryption key, metadata
-- [x] Return encrypted_cid, watermarked_cid, id
-- [x] Write integration tests for success and error cases
-- [ ] Add rate limiting
-
-**Branch:** `feature/upload-api` | **Assigned:** _in progress_
-
-### 2.4 Upload Page UI
-- [ ] Create /upload page (protected - requires Privy auth)
-- [ ] Build drag-and-drop file upload component
-- [ ] Add form fields: title, description, tags (comma-separated), price (USDC)
-- [ ] Client-side validation before submit
-- [ ] Show upload progress indicator
-- [ ] Handle success: redirect to homepage
-- [ ] Handle errors: display user-friendly message
-- [ ] Write component tests
-
-**Branch:** `feature/upload-ui` | **Assigned:** _unclaimed_
-
----
-
-## Phase 3: Browse & Display
-
-### 3.1 Images List API
-- [x] Create GET /api/images route handler
-- [x] Query all images from database
-- [x] Return: watermarked_cid, title, price, photographer_address, id
-- [x] Order by created_at DESC
-- [x] Write integration tests
-- [x] Test empty database case
-
-**Branch:** `feature/images-list-api` | **Assigned:** _unclaimed_
-
-### 3.2 Homepage UI
-- [x] Build responsive image grid (4 cols desktop, 2 cols mobile)
-- [x] Create ImageCard component: thumbnail from IPFS, title, price
-- [x] Fetch images from /api/images on load
-- [x] Link each card to /image/[id]
-- [x] Add loading skeleton state
-- [x] Write component tests
-
-**Branch:** `feature/homepage` | **Assigned:** _unclaimed_
-
-### 3.3 Image Detail API (x402)
-- [ ] Create GET /api/images/[id] route handler
-- [ ] Check for existing license in database (buyer + image)
-- [ ] Check for x402 payment proof in request headers
-- [ ] If no license and no payment: return 402 with x402 headers + watermarked preview
-- [ ] If valid payment proof: verify → split revenue → create license → return decrypted image
-- [ ] If license exists: return decrypted image (re-download)
-- [ ] Write integration tests for all three paths
-- [ ] Test invalid image ID, invalid payment proof
-
-**Branch:** `feature/image-detail-api` | **Assigned:** _unclaimed_
-
-### 3.4 Image Detail Page UI
-- [ ] Create /image/[id] page
-- [ ] Display large watermarked preview from IPFS
-- [ ] Show title, photographer address (truncated), price
-- [ ] Build "Buy License" button
-- [ ] On click: trigger Privy login if needed
-- [ ] Implement purchase flow: sign message → send payment proof → receive image
-- [ ] Trigger download of decrypted image
-- [ ] Handle loading and error states
-- [ ] Write component tests
-- [ ] E2E test for complete purchase flow
-
-**Branch:** `feature/image-detail-ui` | **Assigned:** _unclaimed_
-
----
-
-## Phase 4: Payments
-
-### 4.1 Smart Contract
-- [ ] Write RevenueDistributor.sol (see TECHNICAL_SPEC)
-- [ ] Implement distributePayment(photographer, amount): 90% to photographer, 10% to treasury
-- [ ] Emit PaymentDistributed event
-- [ ] Write Hardhat unit tests
-- [ ] Test edge cases: zero amount, same address for both parties
-- [ ] Security review: access control, zero address validation, event emission
-- [ ] Deploy to Base Sepolia testnet
-- [ ] Verify contract on Basescan
-- [ ] Test with real transactions on testnet
-- [ ] Deploy to Base Mainnet
-- [ ] Verify mainnet contract
-
-**Branch:** `feature/smart-contract` | **Assigned:** _unclaimed_
-
-### 4.2 x402 Integration
-- [ ] Install x402: `pnpm add x402`
-- [ ] Fork coinbase/x402 repository
-- [ ] Implement ERC-6492 fix in `typescript/packages/x402/src/schemes/exact/evm/facilitator.ts`
-- [ ] Add ERC-6492 parsing before `verifyTypedData()` call
-- [ ] Write unit tests for ERC-6492 signature handling
-- [ ] Submit PR to coinbase/x402 referencing issue #623
-- [ ] Use forked x402 in LensLlama until PR merged
-- [ ] Set up facilitator service
-- [ ] Configure for single payment to photographer
-- [ ] Test payment flow with EOA signatures
-- [ ] Test payment flow with Privy embedded wallet
-- [ ] Fund facilitator wallet with ETH for gas
-- [ ] Deploy facilitator service (Vercel/Railway)
-
-**Branch:** `feature/x402-integration` | **Assigned:** _unclaimed_
-
-### 4.3 Payment Flow Integration
-- [ ] Create EIP-712 typed data message builder for x402
-- [ ] Integrate with Privy wallet for signing
-- [ ] Send signed message as payment proof header
-- [ ] Backend: call facilitator /verify endpoint
-- [ ] Backend: call facilitator /settle endpoint
-- [ ] Backend: call RevenueDistributor.distributePayment()
-- [ ] Backend: create license record in database
-- [ ] Backend: download, decrypt, return image
-- [ ] Write integration tests
-- [ ] E2E test: full payment with embedded wallet
-- [ ] E2E test: full payment with MetaMask
-- [ ] Test insufficient funds scenario
-
-**Branch:** `feature/payment-flow` | **Assigned:** _unclaimed_
-
----
-
-## Phase 5: Polish & Deploy
-
-### 5.1 Error Handling
-- [ ] Add React error boundaries
-- [ ] Create user-friendly error messages (no technical jargon)
-- [ ] Add loading states for all async operations
-- [ ] Implement retry logic for Filecoin operations
-- [ ] Add toast notifications for success/error feedback
-
-**Branch:** `feature/error-handling` | **Assigned:** _unclaimed_
-
-### 5.2 CI/CD Setup
-- [ ] Configure GitHub Actions workflow
-- [ ] On PR: run lint, typecheck, unit tests, integration tests, build
-- [ ] On PR: create Vercel preview deployment
-- [ ] On merge to main: run E2E tests
-- [ ] On merge to main: auto-deploy to production
-- [ ] Set up Slack/Discord notifications for deploy status
-
-**Branch:** `setup/ci-cd` | **Assigned:** _unclaimed_
-
-### 5.3 Deployment
-- [ ] Configure Vercel project (use Vercel MCP)
-- [ ] Set all environment variables in Vercel dashboard
-- [ ] Connect GitHub repository
-- [ ] Deploy to production
-- [ ] Smoke test: upload, browse, purchase, download
-- [ ] Verify transactions on Basescan
-
-**Branch:** `deploy/production` | **Assigned:** _unclaimed_
-
-### 5.4 Demo Prep
-- [ ] Seed database with 15-20 high-quality sample images
-- [ ] Create demo photographer wallet
-- [ ] Fund demo buyer wallet with USDC
-- [ ] Write demo script (step-by-step)
-- [ ] Practice demo run-through
-- [ ] Record backup video in case of technical issues
-
-**Branch:** `demo/seed-data` | **Assigned:** _unclaimed_
-
----
-
-## Stretch Goals
-
-### S1. Search
-- [ ] Add search bar component to homepage
-- [ ] Create GET /api/images/search endpoint
-- [ ] Implement LIKE query on title, description, tags
-- [ ] Debounce search input
-- [ ] Write tests
-
-**Branch:** `stretch/search` | **Assigned:** _unclaimed_
-
-### S2. Categories
-- [ ] Add category field to images table (migration)
-- [ ] Add category filter buttons to homepage
-- [ ] Filter API results by category
-- [ ] Write tests
-
-**Branch:** `stretch/categories` | **Assigned:** _unclaimed_
-
-### S3. Photographer Profiles
-- [ ] Create photographers table with display_name
-- [ ] Auto-register on first upload
-- [ ] Display name instead of truncated wallet address
-- [ ] Write tests
-
-**Branch:** `stretch/profiles` | **Assigned:** _unclaimed_
-
-### S4. Upload Job Queue (Scalability)
-- [ ] Investigate job queue solutions (BullMQ + Redis, or database-backed)
-- [ ] Add upload_status field to images table (pending, uploading, completed, failed)
-- [ ] Replace fire-and-forget with persistent job queue
-- [ ] Implement worker process for background uploads
-- [ ] Add retry logic with exponential backoff
-- [ ] Add monitoring/visibility for failed uploads
-- [ ] Write tests for queue operations
-
-**Branch:** `stretch/upload-queue` | **Assigned:** _unclaimed_
-
-### S5. Revenue Split (Platform Fee)
-- [ ] Update payment flow to use two transferWithAuthorization calls
-- [ ] User signs two authorizations: 10% to treasury, 90% to photographer
-- [ ] Facilitator executes both transfers sequentially
-- [ ] Or use RevenueDistributor contract (Phase 4.1) as intermediary
-- [ ] Update environment variables for treasury address
-- [ ] Write tests for split calculations
-
-**Branch:** `stretch/revenue-split` | **Assigned:** _unclaimed_
 
 ---
 
 ## Notes & Blockers
 
-_Add any blockers, questions, or dependencies here:_
+### Open Questions
+- Which reverse image search API? (Google Vision vs TinEye - cost vs accuracy tradeoff)
+- C2PA signing key management? (Platform key vs photographer keys)
+- Email service provider? (Resend vs SendGrid vs Loops)
 
--
-
----
-
-## Quick Reference
-
-### Environment Variables
-```
-POSTGRES_URL
-NEXT_PUBLIC_PRIVY_APP_ID
-SYNAPSE_PRIVATE_KEY
-FILECOIN_RPC_URL
-NEXT_PUBLIC_BASE_RPC_URL
-NEXT_PUBLIC_REVENUE_DISTRIBUTOR_ADDRESS
-PLATFORM_TREASURY_ADDRESS
-FACILITATOR_URL
-FACILITATOR_PRIVATE_KEY
-MASTER_ENCRYPTION_KEY
-```
-
-### Commands
-```bash
-npm run dev          # Start dev server
-npm run build        # Production build
-npm run test         # Run all tests
-npm run lint         # Run linter
-npm run db:migrate   # Run database migrations
-npm run db:seed      # Seed demo data
-```
-
-### Key Documentation
-- **TECHNICAL_SPEC** - Primary reference for all implementation details
-- **Context7 MCP** - Use for up-to-date library docs
-- **Vercel MCP** - Use for deployment operations
+### Dependencies
+- Base mainnet migration blocks real transactions
+- C2PA blocks credentialed uploads
+- Infringement search blocks monitoring tiers
